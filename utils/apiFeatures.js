@@ -18,7 +18,8 @@ module.exports = (key, requestQuery) => {
   }
   if(orderId) {
     query = {
-      
+      ...query,
+      where: {[key]: parseInt(orderId)}
     }
   }
   console.log(JSON.stringify(query));

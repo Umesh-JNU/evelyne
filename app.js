@@ -4,7 +4,10 @@ const errorMiddleware = require("./middlewares/error");
 const dotenv = require("dotenv");
 const app = express();
 
-dotenv.config({ path: "./config/config.env" });
+// const path = "./config/config.env";
+const path = "./config/local.env";
+
+dotenv.config({ path });
 
 app.use(express.json());
 app.use(

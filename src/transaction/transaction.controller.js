@@ -34,15 +34,26 @@ exports.getAllTransaction = catchAsyncError(async (req, res, next) => {
 	console.log(req.query);
 	const query = getFormattedQuery("orderId", req.query);
 	console.log(JSON.stringify(query));
-	const { rows, count } = await transactionModel.findAndCountAll({...query, include: [{ model: orderModel, as: "order", include: [{ model: userModel, as: "user", attributes: ["id", "fullname"] }] }] });
+	const { rows, count } = await transactionModel.findAndCountAll({
+		...query, include: [{
+			model: orderModel,
+			as: "order",
+			include: [{
+				model: userModel,
+				as: "user",
+				attributes: ["id", "fullname"]
+			}]
+		}]
+	});
 	res.status(200).json({ transactions: rows, transactionCount: count });
 })
 
 exports.getTransaction = catchAsyncError(async (req, res, next) => {
 	console.log("get transaction");
 	const { id } = req.params;
-	const transaction = await transactionModel.findByPk(id);
-	if (!transaction) return next(new ErrorHandler("transaction not found", 404));
+	const transaction = await transactionModel.findByPk(id, {
+		include: [{ model: orderModel, as: "order", include: [{ model: userModel, as: "user", attributes: ["id", "fullname"] }] }]
+	});	if (!transaction) return next(new ErrorHandler("transaction not found", 404));
 
 	res.status(200).json({ transaction });
 })
