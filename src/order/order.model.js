@@ -19,6 +19,14 @@ const orderItemModel = db.define("OrderItem", {
         msg: "Quantity must be a number."
       }
     }
+  },
+  address: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notNull: { msg: "Address is required" },
+      notEmpty: { msg: "Address is required" },
+    },
   }
 }, { timestamps: true });
 

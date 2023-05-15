@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
+const { auth } = require("../../middlewares/auth");
 
-const { createWarehouse, getAllWarehouse, updateWarehouse, getWarehouse, deleteWarehouse } = require("./warehouse.controller");
+const { getAllWarehouse, getWarehouse } = require("./warehouse.controller");
 
-router.route("/").post(createWarehouse).get(getAllWarehouse);
-router.route("/:id").put(updateWarehouse).get(getWarehouse).delete(deleteWarehouse);
+router.get("/", getAllWarehouse);
+router.get("/:id", getWarehouse);
 
 module.exports = router;

@@ -11,8 +11,11 @@ orderModel.belongsTo(userModel, { foreignKey: "userId", as: "user" });
 warehouseModel.hasMany(orderModel, { foreignKey: "warehouseId", as: "orders" });
 orderModel.belongsTo(warehouseModel, { foreignKey: "warehouseId", as: "warehouse" });
 
-orderModel.hasOne(transactionModel, {foreignKey: "orderId", as: "transaction"});
-transactionModel.belongsTo(orderModel, {foreignKey: "orderId", as: "order"});
+orderModel.hasOne(transactionModel, { foreignKey: "orderId", as: "transaction" });
+transactionModel.belongsTo(orderModel, { foreignKey: "orderId", as: "order" });
+
+userModel.hasOne(warehouseModel, { foreignKey: "userId", as: "warehouse" });
+warehouseModel.belongsTo(userModel, { foreignKey: "userId", as: "managed_by" });
 
 module.exports = {
   userRoute, userModel,

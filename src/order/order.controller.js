@@ -79,3 +79,42 @@ exports.deleteOrder = catchAsyncError(async (req, res, next) => {
 	await orderModel.destroy({ where: { id } });
 	res.status(204).json({ message: "Order Deleted Successfully." });
 })
+
+// user
+exports.getMyAllOrder = catchAsyncError(async (req, res, next) => {
+	const userId = req.userId;
+	console.log("getMyAllOrder", userId, req.query);
+	const query = getFormattedQuery("id", req.query);
+	query.where = { ...query.where, userId };
+	console.log(JSON.stringify(query));
+	const orders = await orderModel.findAll({
+		...query, include: [
+			{
+				model: orderItemModel,
+				as: "items",
+				attributes: ["id", "name", "quantity"],
+			},
+		]
+	});
+
+	res.status(200).json({ orders, orderCount: orders.length });
+})
+
+exports.getMyOrder = catchAsyncError(async (req, res, next) => {
+	console.log("get My Order");
+	const userId = req.userId;
+	const { id } = req.params;
+	const order = await orderModel.findOne({
+		where: { id, userId },
+		include: [
+			{
+				model: orderItemModel,
+				as: "items",
+				attributes: ["id", "name", "quantity"],
+			},
+		]
+	});
+	if (!order) return next(new ErrorHandler("Order not found", 404));
+
+	res.status(200).json({ order });
+})

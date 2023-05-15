@@ -16,6 +16,10 @@ const warehouseModel = db.define(
       type: DataTypes.INTEGER,
       defaultValue: 1000,
     },
+    curr_capacity: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1000,
+    }
   },
   { timestamps: true }
 )

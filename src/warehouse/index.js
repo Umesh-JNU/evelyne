@@ -1,5 +1,5 @@
 const warehouseModel = require("./warehouse.model");
-const warehouseController = require("./warehouse.controller");
+const { createWarehouse, getAllWarehouse, getWarehouse, updateWarehouse, deleteWarehouse } = require("./warehouse.controller");
 const warehouseRoute = require("./warehouse.route");
 
-module.exports = { warehouseModel, warehouseController, warehouseRoute };
+module.exports = { warehouseModel, createWarehouse, getAllWarehouse, getWarehouse, updateWarehouse, deleteWarehouse, warehouseRoute };

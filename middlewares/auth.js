@@ -8,7 +8,7 @@ exports.auth = async (req, res, next) => {
     if (!req.headers.authorization) {
       return res.status(401).send({
         error: {
-          message: `Unauthorized.Please Send token in request header`,
+          message: `Unauthorized. Please Send token in request header`,
         },
       });
     }
@@ -28,16 +28,16 @@ exports.auth = async (req, res, next) => {
   }
 };
 
-exports.isAdmin = async (req, res, next) => {
-  const userId = req.userId;
-  console.log({ userModel });
-  const user = await userModel.findByPk(userId);
-  console.log("inside is admin", userId, user);
+exports.authRole = (roles) => async (req, res, next) => {
   try {
+    const userId = req.userId;
+    console.log({ userModel });
+    const user = await userModel.findByPk(userId);
+    console.log("inside is admin", userId, user);
     if (!user)
-      return next(new ErrorHandler("Invalid token. User not found.", 401));
+      return next(new ErrorHandler("Invalid token. User not found.", 404));
 
-    if (user.role !== "admin")
+    if (!roles.includes(user.role))
       return next(new ErrorHandler("Restricted.", 401));
 
     req.user = user;

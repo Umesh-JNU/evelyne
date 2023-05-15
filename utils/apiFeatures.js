@@ -7,20 +7,26 @@ module.exports = (key, requestQuery) => {
      * requestQuery: requestQuery passed in api url
      */
   }
-  const { keyword, resultPerPage, currentPage, orderId } = requestQuery;
+  const { keyword, resultPerPage, currentPage, orderId, role } = requestQuery;
   console.log(keyword, resultPerPage, currentPage);
-  let query = {};
+  let query = {where: {}};
   if (keyword) {
-    query = {
-      ...query,
-      where: { [key]: { [Op.regexp]: keyword } },
+    query.where = {
+      ...query.where,
+      [key]: { [Op.regexp]: keyword },
     };
   }
-  if(orderId) {
-    query = {
-      ...query,
-      where: {[key]: parseInt(orderId)}
+  if(role) {
+    query.where = {
+      ...query.where,
+      role,
     }
+  }
+  if(orderId) {
+    query.where = {
+      ...query.where,
+      [key]: parseInt(orderId)
+    };
   }
   console.log(JSON.stringify(query));
 
