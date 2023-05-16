@@ -2,20 +2,19 @@ const ErrorHandler = require("../../utils/errorHandler")
 const catchAsyncError = require("../../utils/catchAsyncError")
 const getFormattedQuery = require("../../utils/apiFeatures");
 const { orderModel, orderItemModel } = require("./order.model");
-const { warehouseModel } = require("../warehouse");
+const  warehouseModel  = require("../warehouse/warehouse.model");
 const { userModel } = require("../user");
 
 exports.createOrder = catchAsyncError(async (req, res, next) => {
 	console.log("create Order", req.body);
-	const { warehouse, user, items } = req.body;
-
+	const { warehouse, user, items, address } = req.body;
 	const warehouse_ = await warehouseModel.findByPk(warehouse);
 	if (!warehouse_) return next(new ErrorHandler("No such warehouse exists.", 404));
 
 	const user_ = await userModel.findByPk(user);
 	if (!user_) return next(new ErrorHandler("User not found.", 404));
 
-	const order = await orderModel.create({});
+	const order = await orderModel.create({address});
 
 	items.forEach(item => { item.orderId = order.id; });
 	console.log(items);
@@ -38,6 +37,16 @@ exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 				as: "items",
 				attributes: ["id", "name", "quantity"],
 			},
+			{
+				model: userModel,
+				as: "user",
+				attributes: ["id", "fullname"],
+			},
+			{
+				model: warehouseModel,
+				as: "warehouse",
+				attributes: ["id", "name"],
+			},
 		]
 	});
 	res.status(200).json({ orders: rows, orderCount: count });
@@ -52,6 +61,16 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 				model: orderItemModel,
 				as: "items",
 				attributes: ["id", "name", "quantity"],
+			},
+			{
+				model: userModel,
+				as: "user",
+				attributes: ["id", "fullname"],
+			},
+			{
+				model: warehouseModel,
+				as: "warehouse",
+				attributes: ["id", "name"],
 			},
 		]
 	});

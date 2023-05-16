@@ -31,9 +31,8 @@ exports.auth = async (req, res, next) => {
 exports.authRole = (roles) => async (req, res, next) => {
   try {
     const userId = req.userId;
-    console.log({ userModel });
     const user = await userModel.findByPk(userId);
-    console.log("inside is admin", userId, user);
+    console.log("inside is admin", userId, user.dataValues);
     if (!user)
       return next(new ErrorHandler("Invalid token. User not found.", 404));
 

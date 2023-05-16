@@ -19,6 +19,13 @@ const orderItemModel = db.define("OrderItem", {
         msg: "Quantity must be a number."
       }
     }
+  }
+}, { timestamps: true });
+
+const orderModel = db.define("Order", {
+  status: {
+    type: DataTypes.ENUM("arrived", "in-bound", "out-bound", "in-transit"),
+    defaultValue: "in-bound",
   },
   address: {
     type: DataTypes.STRING,
@@ -27,13 +34,6 @@ const orderItemModel = db.define("OrderItem", {
       notNull: { msg: "Address is required" },
       notEmpty: { msg: "Address is required" },
     },
-  }
-}, { timestamps: true });
-
-const orderModel = db.define("Order", {
-  status: {
-    type: DataTypes.ENUM("arrived", "in-bound", "out-bound", "in-transit"),
-    defaultValue: "out-bound",
   }
 },
   { timestamps: true }
