@@ -7,7 +7,7 @@ const { userModel } = require("../user");
 
 exports.createWarehouse = catchAsyncError(async (req, res, next) => {
     console.log("create warehouse", req.body);
-    const { name, user_id } = req.body;
+    const { name, capacity, curr_capacity, userId: user_id } = req.body;
 
     if (!user_id) return next(new ErrorHandler("Please provide the userId", 400));
 
@@ -15,7 +15,7 @@ exports.createWarehouse = catchAsyncError(async (req, res, next) => {
     if (!user) return next(new ErrorHandler("User not found", 404));
 
     console.log({ user })
-    const warehouse = await warehouseModel.create({ name, userId: user.id });
+    const warehouse = await warehouseModel.create({ name, capacity, curr_capacity, userId: user.id });
     res.status(201).json({ warehouse });
 })
 

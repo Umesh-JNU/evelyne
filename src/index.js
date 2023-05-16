@@ -4,6 +4,7 @@ const { transactionRoute, transactionModel, transactionController } = require(".
 const { invoiceRoute, invoiceModel, invoiceController } = require("./invoice");
 const { orderRoute, orderModel, orderController } = require("./order");
 const { adminRoute } = require("./admin");
+const {contentRoute} = require("./staticDetails");
 
 userModel.hasMany(orderModel, { foreignKey: "userId", as: "orders" });
 orderModel.belongsTo(userModel, { foreignKey: "userId", as: "user" });
@@ -24,4 +25,5 @@ module.exports = {
   invoiceRoute,
   orderRoute,
   adminRoute,
+  contentRoute,
 };

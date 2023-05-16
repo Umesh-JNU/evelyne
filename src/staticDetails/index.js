@@ -1,5 +1,5 @@
-const contactModel = require("./contact.model");
-const contactController = require("./contact.controller");
-const contactRoute = require("./contact.route");
+const contentModel = require("./content.model");
+const contentController = require("./content.controller");
+const contentRoute = require("./content.route");
 
-module.exports = { contactModel, contactController, contactRoute };
+module.exports = { contentModel, contentController, contentRoute };

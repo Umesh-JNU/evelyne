@@ -6,8 +6,8 @@ const validateEmail = (email) => {
   return re.test(email);
 };
 
-const contactModel = db.define(
-  "Contact",
+const contentModel = db.define(
+  "Content",
   {
     contact_no: {
       type: DataTypes.STRING,
@@ -34,8 +34,16 @@ const contactModel = db.define(
         }
       },
     },
+    about_us: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: "About Us is required." },
+        notNull: { msg: "About Us is required." },
+      },
+    }
   },
   { timestamps: true }
 )
 
-module.exports = contactModel;
+module.exports = contentModel;

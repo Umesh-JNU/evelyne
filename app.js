@@ -20,13 +20,14 @@ app.use(
 
 app.get("/", (req, res, next) => res.json({ message: "Server is running" }));
 
-const { userRoute, warehouseRoute, transactionRoute, invoiceRoute, orderRoute, adminRoute } = require("./src");
+const { userRoute, warehouseRoute, transactionRoute, invoiceRoute, orderRoute, adminRoute, contentRoute } = require("./src");
 app.use("/api/user", userRoute);
 app.use("/api/warehouse", warehouseRoute);
 app.use("/api/transaction", transactionRoute);
 app.use("/api/invoice", invoiceRoute);
 app.use("/api/order", orderRoute);
 app.use("/api/admin", adminRoute);
+app.use("/api/content", contentRoute);
 
 app.all("*", async (req, res) => {
   res
