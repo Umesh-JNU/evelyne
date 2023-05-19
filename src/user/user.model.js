@@ -20,7 +20,7 @@ const userModel = db.define(
       validate: {
         notNull: { msg: "Email is required" },
         notEmpty: { msg: "Email is required" },
-        isEmail: function(value) {
+        isEmail: function (value) {
           if (value !== '' && !validateEmail(value)) {
             throw new Error('Invalid email address');
           }
@@ -75,11 +75,7 @@ const userModel = db.define(
         notNull: { msg: "City is required" },
         notEmpty: { msg: "City is required" },
       },
-    },
-    role: {
-      type: DataTypes.ENUM("user", "admin", "controller", "manager"),
-      defaultValue: "user",
-    },
+    }
   },
   {
     timestamps: true,
@@ -111,7 +107,7 @@ userModel.prototype.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-userModel.getUpdateFields = function(userData) {
+userModel.getUpdateFields = function (userData) {
   const attributes = Object.keys(this.rawAttributes);
   const defaultFields = [
     "id",
@@ -131,4 +127,30 @@ userModel.getUpdateFields = function(userData) {
     )
   );
 };
-module.exports = userModel;
+
+const roleModel = db.define(
+  "Role",
+  {
+    role: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: { msg: "Role is required" },
+        notEmpty: { msg: "Role is required" },
+      },
+    }
+  },
+  { timestamps: true }
+)
+
+roleModel.hasMany(userModel, { foreignKey: "roleId", as: "user" });
+userModel.belongsTo(roleModel, { foreignKey: "roleId", as: "userRole" });
+
+(async() => {
+  await roleModel.create({role: "user"});
+  await roleModel.create({role: "manager"});
+  await roleModel.create({role: "controller"});
+  await roleModel.create({role: "admin"});
+})();
+
+module.exports = { userModel, roleModel };

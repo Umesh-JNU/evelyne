@@ -7,6 +7,7 @@ const { getAllUsers, getUser, updateUser, deleteUser } = require('./admin.contro
 const { createContent, updateContent, deleteContent } = require("../staticDetails/content.controller");
 
 const { createWarehouse, updateWarehouse, deleteWarehouse } = require("../warehouse");
+const { createOrder, getAllOrder, getOrder, updateOrder, deleteOrder } = require('../order');
 
 router.get("/users", auth, authRole(["admin"]), getAllUsers);
 router.route("/user/:id")
@@ -14,14 +15,22 @@ router.route("/user/:id")
   .put(auth, authRole(["admin"]), updateUser)
   .delete(auth, authRole(["admin"]), deleteUser);
 
-router.post("/content", auth, authRole("admin"), createContent);
+router.post("/content", auth, authRole(["admin"]), createContent);
 router.route("/content/:id")
-  .put(auth, authRole("admin"), updateContent)
-  .delete(auth, authRole("admin"), deleteContent);
+  .put(auth, authRole(["admin"]), updateContent)
+  .delete(auth, authRole(["admin"]), deleteContent);
 
-router.post("/warehouse", auth, authRole("admin"), createWarehouse);
+router.post("/warehouse", auth, authRole(["admin"]), createWarehouse);
 router.route("/warehouse/:id")
-  .put(auth, authRole("admin"), updateWarehouse)
-  .delete(auth, authRole("admin"), deleteWarehouse);
-  
+  .put(auth, authRole(["admin"]), updateWarehouse)
+  .delete(auth, authRole(["admin"]), deleteWarehouse);
+
+router.post("/order", auth, authRole(['admin', 'manager']), createOrder);
+router.get("/orders", auth, authRole(['admin', 'manager', 'controller']), getAllOrder);
+
+router.route("/order/:id")
+  .put(auth, authRole(['admin', 'manager']), updateOrder)
+  .get(auth, authRole(['admin', 'manager', 'controller']), getOrder)
+  .delete(auth, authRole(['admin', 'manager']), deleteOrder);
+
 module.exports = router;

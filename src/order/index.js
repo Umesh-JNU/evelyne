@@ -1,5 +1,5 @@
-const {orderModel, orderItemModel} = require("./order.model");
-const orderController = require("./order.controller");
+const { orderModel, orderItemModel } = require("./order.model");
+const { createOrder, getAllOrder, getOrder, updateOrder, deleteOrder } = require("./order.controller");
 const orderRoute = require("./order.route");
 
-module.exports = { orderModel, orderController, orderRoute };
+module.exports = { orderModel, createOrder, getAllOrder, getOrder, updateOrder, deleteOrder, orderRoute };

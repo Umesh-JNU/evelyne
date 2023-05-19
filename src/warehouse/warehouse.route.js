@@ -8,3 +8,5 @@ router.get("/", getAllWarehouse);
 router.get("/:id", getWarehouse);
 
 module.exports = router;
+
+// search by Id, name warehouse,

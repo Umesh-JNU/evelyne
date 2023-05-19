@@ -1,8 +1,9 @@
 const ErrorHandler = require("../../utils/errorHandler");
 const catchAsyncError = require("../../utils/catchAsyncError");
-const userModel = require("./user.model");
+const { userModel, roleModel } = require("./user.model");
 const { Op } = require("sequelize");
 const bcrypt = require("bcryptjs");
+const { warehouseModel } = require("../warehouse");
 
 const sendData = (user, statusCode, res) => {
   const token = user.getJWTToken();
@@ -14,24 +15,78 @@ const sendData = (user, statusCode, res) => {
 
 exports.create = catchAsyncError(async (req, res, next) => {
   console.log("register", req.body);
-  const { fullname, email, password, mobile_no, country, city, role } =
-    req.body;
+  const { fullname, email, password, mobile_no, country, city, warehouses } = req.body;
+  let { role } = req.body;
 
-  const user = await userModel.create({
+  if (!role) role = "user";
+  console.log({ role })
+
+  const userRole = await roleModel.findOne({ where: { role } });
+  console.log({ userRole });
+  if (!userRole) return next(new ErrorHandler("Invalid user role.", 400));
+
+  let user = await userModel.create({
     fullname,
     email,
     password,
     mobile_no,
     country,
     city,
-    role,
+    roleId: userRole.id
   });
+
+  const includeOptions = [{
+    model: roleModel,
+    as: "userRole",
+    attributes: ["role"]
+  }];
+
+  if (warehouses && warehouses.length > 0) {
+    if (userRole.role === "manager") {
+      const warehouseId = warehouses[0];
+      const warehouse_ = await warehouseModel.findByPk(warehouseId);
+      if (!warehouse_) return next(new ErrorHandler("Warehouse not found", 400));
+
+      warehouse_.managerId = user.id;
+      await warehouse_.save();
+
+      user = await userModel.findByPk(user.id, {
+        include: [...includeOptions, {
+          model: warehouseModel,
+          as: 'warehouse',
+          attributes: ["id", "name", "capacity", "filled"],
+        }],
+        attributes: {
+          exclude: ["roleId"]
+        }
+      });
+    }
+    else if (userRole.role === "controller") {
+      const [warehouses_] = await warehouseModel.update({ controllerId: user.id }, {
+        where: { id: { [Op.in]: warehouses } }
+      });
+
+      if (!warehouses_) return next(new ErrorHandler("Warehouses not found.", 404));
+
+      user = await userModel.findByPk(user.id, {
+        include: [...includeOptions, {
+          model: warehouseModel,
+          as: 'warehouses',
+          attributes: ["id", "name", "capacity", "filled"],
+        }],
+        attributes: {
+          exclude: ["roleId"]
+        }
+      });
+    }
+  }
 
   sendData(user, 201, res);
 });
 
 exports.login = catchAsyncError(async (req, res, next) => {
   console.log("user login", req.body);
+
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -42,6 +97,14 @@ exports.login = catchAsyncError(async (req, res, next) => {
 
   const user = await userModel.scope("withPassword").findOne({
     where: { [Op.or]: [{ email: username }, { mobile_no: username }] },
+    include: [{
+      model: roleModel,
+      as: "userRole",
+      attributes: ["role"]
+    }],
+    attributes: {
+      exclude: ["roleId"]
+    }
   });
 
   console.log({ user });
@@ -50,7 +113,7 @@ exports.login = catchAsyncError(async (req, res, next) => {
   }
 
   const isPasswordMatched = await user.comparePassword(password);
-  console.log({isPasswordMatched})
+  console.log({ isPasswordMatched })
   if (!isPasswordMatched)
     return next(new ErrorHandler("Invalid email or password!", 401));
 
@@ -61,7 +124,16 @@ exports.getProfile = catchAsyncError(async (req, res, next) => {
   console.log("user profile", req.userId);
   const userId = req.userId;
 
-  const user = await userModel.findByPk(userId);
+  const user = await userModel.findByPk(userId, {
+    include: [{
+      model: roleModel,
+      as: "userRole",
+      attributes: ["role"]
+    }],
+    attributes: {
+      exclude: ["roleId"]
+    }
+  });
   if (!user) return next(new ErrorHandler("User not found.", 400));
 
   res.status(200).json({ user });

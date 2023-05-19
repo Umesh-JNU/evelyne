@@ -1,4 +1,5 @@
 const { Op } = require("sequelize");
+const { roleModel } = require("../src/user");
 
 module.exports = (key, requestQuery) => {
   {
@@ -9,20 +10,14 @@ module.exports = (key, requestQuery) => {
   }
   const { keyword, resultPerPage, currentPage, orderId, role } = requestQuery;
   console.log(keyword, resultPerPage, currentPage);
-  let query = {where: {}};
+  let query = { where: {} };
   if (keyword) {
     query.where = {
       ...query.where,
       [key]: { [Op.regexp]: keyword },
     };
   }
-  if(role) {
-    query.where = {
-      ...query.where,
-      role,
-    }
-  }
-  if(orderId) {
+  if (orderId) {
     query.where = {
       ...query.where,
       [key]: parseInt(orderId)
