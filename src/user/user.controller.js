@@ -50,16 +50,11 @@ exports.create = catchAsyncError(async (req, res, next) => {
       warehouse_.managerId = user.id;
       await warehouse_.save();
 
-      user = await userModel.findByPk(user.id, {
-        include: [...includeOptions, {
-          model: warehouseModel,
-          as: 'warehouse',
-          attributes: ["id", "name", "capacity", "filled"],
-        }],
-        attributes: {
-          exclude: ["roleId"]
-        }
-      });
+      includeOptions.push({
+        model: warehouseModel,
+        as: 'warehouse',
+        attributes: ["id", "name", "capacity", "filled"]
+      })
     }
     else if (userRole.role === "controller") {
       const [warehouses_] = await warehouseModel.update({ controllerId: user.id }, {
@@ -68,19 +63,21 @@ exports.create = catchAsyncError(async (req, res, next) => {
 
       if (!warehouses_) return next(new ErrorHandler("Warehouses not found.", 404));
 
-      user = await userModel.findByPk(user.id, {
-        include: [...includeOptions, {
-          model: warehouseModel,
-          as: 'warehouses',
-          attributes: ["id", "name", "capacity", "filled"],
-        }],
-        attributes: {
-          exclude: ["roleId"]
-        }
+      includeOptions.push({
+        model: warehouseModel,
+        as: 'warehouses',
+        attributes: ["id", "name", "capacity", "filled"],
       });
     }
   }
 
+  user = await userModel.findByPk(user.id, {
+    include: includeOptions,
+    attributes: {
+      exclude: ["roleId"]
+    }
+  });
+  
   sendData(user, 201, res);
 });
 

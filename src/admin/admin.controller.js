@@ -11,9 +11,16 @@ exports.userController = {
     console.log(JSON.stringify(query));
     let role = {};
     let houseAliasKey;
+    const includeOptions = [];
+
     if (req.query.role) {
       role = { role: req.query.role };
       houseAliasKey = 'warehouse' + (req.query.role === "controller" ? "s" : "");
+      includeOptions.push({
+        model: warehouseModel,
+        as: houseAliasKey,
+        attributes: ["id", "name", "capacity", "filled"]
+      })
     }
     console.log(role);
     const { rows, count } = await userModel.findAndCountAll({
@@ -23,11 +30,7 @@ exports.userController = {
         as: "userRole",
         where: role,
         attributes: ["role"]
-      }, {
-        model: warehouseModel,
-        as: houseAliasKey,
-        attributes: ["id", "name", "capacity", "filled"],
-      }],
+      }, ...includeOptions],
       attributes: {
         exclude: ["roleId"]
       }

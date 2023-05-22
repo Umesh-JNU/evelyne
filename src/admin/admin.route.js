@@ -7,7 +7,10 @@ const { getAllUsers, getUser, updateUser, deleteUser } = require('./admin.contro
 const { createContent, updateContent, deleteContent } = require("../staticDetails/content.controller");
 
 const { createWarehouse, updateWarehouse, deleteWarehouse } = require("../warehouse");
+
 const { createOrder, getAllOrder, getOrder, updateOrder, deleteOrder } = require('../order');
+
+const { createTransaction, getAllTransaction, updateTransaction, getTransaction, deleteTransaction } = require('../transaction/transaction.controller');
 
 router.get("/users", auth, authRole(["admin"]), getAllUsers);
 router.route("/user/:id")
@@ -32,5 +35,14 @@ router.route("/order/:id")
   .put(auth, authRole(['admin', 'manager']), updateOrder)
   .get(auth, authRole(['admin', 'manager', 'controller']), getOrder)
   .delete(auth, authRole(['admin', 'manager']), deleteOrder);
+
+router.post("/transaction", auth, authRole(['admin', 'manager']), createTransaction);
+router.get("/transactions", auth, authRole(['admin', 'manager', 'controller']), getAllTransaction);
+
+router.route("/transaction/:id")
+  .put(auth, authRole(['admin', 'manager']), updateTransaction)
+  .get(auth, authRole(['admin', 'manager', 'controller']), getTransaction)
+  .delete(auth, authRole(['admin', 'manager']), deleteTransaction);
+
 
 module.exports = router;

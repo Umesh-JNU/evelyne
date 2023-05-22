@@ -1,13 +1,13 @@
 const { Sequelize } = require("sequelize");
 
 const database = process.env.DATABASE;
-const user = process.env.USER;
+const username = process.env.USER;
 const password = process.env.PASSWORD;
 const dialect = process.env.DIALECT;
 const host = process.env.HOST;
 
-console.log({database, user, password, host, dialect})
-const sequelize = new Sequelize(database, user, password, { host, dialect });
+console.log({database, username, password, host, dialect})
+const sequelize = new Sequelize(database, username, password, { host, dialect });
 
 // const sequelize = new Sequelize({
 //   dialect: "sqlite",
