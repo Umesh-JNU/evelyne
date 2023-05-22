@@ -50,16 +50,14 @@ exports.getAllTransaction = catchAsyncError(async (req, res, next) => {
 	console.log(req.query);
 	const query = getFormattedQuery("orderId", req.query);
 
-	// const user = req.user;
-	// console.log({user});
-	// if (!user || user?.userRole?.role === 'user') {
-	// 	console.log(!user)
-	// 	query.where = {
-	// 		...query.where,
-	// 		userId: req.userId
-	// 	}
-	// };
+	const user = req.user;
+	console.log({ user });
+	if (!user || user?.userRole?.role === 'user') {
+		console.log(!user)
+		options.include[0].where = { userId: req.userId }
+	};
 
+	console.log(options.include[0])
 	console.log(JSON.stringify(query));
 	const { rows, count } = await transactionModel.findAndCountAll({
 		...query, ...options
@@ -70,11 +68,17 @@ exports.getAllTransaction = catchAsyncError(async (req, res, next) => {
 exports.getTransaction = catchAsyncError(async (req, res, next) => {
 	console.log("get transaction");
 	const { id } = req.params;
+
+	const user = req.user;
+	if (!user || user?.userRole?.role === 'user') {
+		options.include[0].where = { userId: req.userId }
+	};
+
 	const transaction = await transactionModel.findByPk(id, {
 		...options
 	});
 
-	if (!transaction) return next(new ErrorHandler("transaction not found", 404));
+	if (!transaction) return next(new ErrorHandler("Transaction not found", 404));
 
 	res.status(200).json({ transaction });
 })

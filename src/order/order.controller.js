@@ -26,8 +26,8 @@ const includeOptions = [
 exports.createOrder = catchAsyncError(async (req, res, next) => {
 	console.log("create Order", req.body);
 	const { warehouse, user, items, address } = req.body;
-	
-	if(!items || items.length === 0) return next(new ErrorHandler("Please provide at least one product.", 400));
+
+	if (!items || items.length === 0) return next(new ErrorHandler("Please provide at least one product.", 400));
 
 	const warehouse_ = await warehouseModel.findByPk(warehouse);
 	if (!warehouse_) return next(new ErrorHandler("No such warehouse exists.", 404));
@@ -58,7 +58,7 @@ exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 	const query = getFormattedQuery("id", req.query);
 
 	const user = req.user;
-	console.log({user});
+	console.log({ user });
 	if (!user || user?.userRole?.role === 'user') {
 		console.log(!user)
 		query.where = {
@@ -93,7 +93,8 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 		}
 	};
 
-	const order = await orderModel.findOne({...query, 
+	const order = await orderModel.findOne({
+		...query,
 		include: includeOptions,
 		attributes: {
 			exclude: ["warehouseId", "userId"]
