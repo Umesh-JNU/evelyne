@@ -92,6 +92,7 @@ const userModel = db.define(
 );
 
 userModel.beforeSave(async (user, options) => {
+  console.log("user", user, user.changed("password"));
   if (user.changed("password")) {
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(user.password, salt);
@@ -143,14 +144,40 @@ const roleModel = db.define(
   { timestamps: true }
 )
 
+const otpModel = db.define(
+  "OTP",
+  {
+    otp: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: { msg: "OTP cannot be null." },
+        notEmpty: { msg: "OTP cannot be empty." },
+      },
+    }
+  },
+  { timestamps: true }
+);
+
+otpModel.prototype.isValid = async function (givenOTP) {
+  const user = await userModel.findByPk(this.userId);
+  if(!user) return false;
+
+  const otpValidityDuration = 15 * 60 * 1000; // 15 minutes in milliseconds
+  const currentTime = new Date().getTime();
+  const otpCreationTime = new Date(this.createdAt).getTime();
+
+  // Calculate the time difference between current time and OTP creation time
+  const timeDifference = currentTime - otpCreationTime;
+
+  // Check if the time difference is within the OTP validity duration
+  return timeDifference <= otpValidityDuration;
+};
+
 roleModel.hasMany(userModel, { foreignKey: "roleId", as: "user" });
 userModel.belongsTo(roleModel, { foreignKey: "roleId", as: "userRole" });
 
-(async() => {
-  await roleModel.create({role: "user"});
-  await roleModel.create({role: "manager"});
-  await roleModel.create({role: "controller"});
-  await roleModel.create({role: "admin"});
-})();
+userModel.hasOne(otpModel, { foreignKey: "userId", as: "otp" });
+otpModel.belongsTo(userModel, { foreignKey: "userId", as: "user" });
 
-module.exports = { userModel, roleModel };
+module.exports = { userModel, roleModel, otpModel };

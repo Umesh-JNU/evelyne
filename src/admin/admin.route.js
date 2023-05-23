@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { auth, authRole } = require("../../middlewares/auth");
 
-const { getAllUsers, getUser, updateUser, deleteUser } = require('./admin.controller').userController;
+const { createController, getAllUsers, getUser, updateUser, deleteUser } = require('./admin.controller').userController;
 
 const { createContent, updateContent, deleteContent } = require("../staticDetails/content.controller");
 

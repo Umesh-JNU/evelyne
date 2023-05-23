@@ -5,6 +5,64 @@ const getFormattedQuery = require("../../utils/apiFeatures");
 const { warehouseModel } = require("../warehouse");
 
 exports.userController = {
+  createController: catchAsyncError(async (req, res, next) => {
+    console.log("register", req.body);
+    const { fullname, email, password, mobile_no, country, city, warehouses, role } = req.body;
+
+    const userRole = await roleModel.findOne({ where: { role } });
+    console.log({ userRole });
+    if (!userRole) return next(new ErrorHandler("Invalid user role.", 400));
+
+    let user = await userModel.create({
+      fullname,
+      email,
+      password,
+      mobile_no,
+      country,
+      city,
+      roleId: userRole.id
+    });
+
+    const includeOptions = [{
+      model: roleModel,
+      as: "userRole",
+      attributes: ["role"]
+    }, {
+      model: warehouseModel,
+      as: 'warehouse',
+      attributes: ["id", "name", "capacity", "filled"]
+    }];
+
+    if (warehouses && warehouses.length > 0) {
+      if (userRole.role === "manager") {
+        const warehouseId = warehouses[0];
+        const warehouse_ = await warehouseModel.findByPk(warehouseId);
+        if (!warehouse_) return next(new ErrorHandler("Warehouse not found", 400));
+
+        warehouse_.managerId = user.id;
+        await warehouse_.save();
+      }
+      else if (userRole.role === "controller") {
+        const [warehouses_] = await warehouseModel.update({ controllerId: user.id }, {
+          where: { id: { [Op.in]: warehouses } }
+        });
+
+        if (!warehouses_) return next(new ErrorHandler("Warehouses not found.", 404));
+
+        includeOptions[1].as = 'warehouses';
+      }
+    }
+
+    user = await userModel.findByPk(user.id, {
+      include: includeOptions,
+      attributes: {
+        exclude: ["roleId"]
+      }
+    });
+
+    res.status(201).json({ user });
+  }),
+
   getAllUsers: catchAsyncError(async (req, res, next) => {
     console.log(req.query);
     const query = getFormattedQuery("fullname", req.query);
