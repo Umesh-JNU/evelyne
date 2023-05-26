@@ -6,12 +6,14 @@ const { createController, getAllUsers, getUser, updateUser, deleteUser } = requi
 
 const { createContent, updateContent, deleteContent } = require("../staticDetails/content.controller");
 
-const { createWarehouse, updateWarehouse, deleteWarehouse } = require("../warehouse");
+const { createWarehouse, updateWarehouse, deleteWarehouse, getWarehouseOrder, myWarehouse } = require("../warehouse");
 
 const { createOrder, getAllOrder, getOrder, updateOrder, deleteOrder } = require('../order');
 
 const { createTransaction, getAllTransaction, updateTransaction, getTransaction, deleteTransaction } = require('../transaction/transaction.controller');
 
+router.post("/controller", auth, authRole(['admin']), createController);
+router.post("/manager", auth, authRole(['admin']), createController);
 router.get("/users", auth, authRole(["admin"]), getAllUsers);
 router.route("/user/:id")
   .get(auth, authRole(["admin"]), getUser)
@@ -24,6 +26,8 @@ router.route("/content/:id")
   .delete(auth, authRole(["admin"]), deleteContent);
 
 router.post("/warehouse", auth, authRole(["admin"]), createWarehouse);
+router.get("/warehouse/orders", auth, authRole(["admin", "controller", "manager"]), getWarehouseOrder);
+router.get("/my-warehouse", auth, authRole(["admin", "controller", "manager"]), myWarehouse);
 router.route("/warehouse/:id")
   .put(auth, authRole(["admin"]), updateWarehouse)
   .delete(auth, authRole(["admin"]), deleteWarehouse);

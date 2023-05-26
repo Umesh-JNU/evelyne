@@ -25,7 +25,7 @@ const includeOptions = [
 
 exports.createOrder = catchAsyncError(async (req, res, next) => {
 	console.log("create Order", req.body);
-	const { warehouse, user, items, address } = req.body;
+	const { warehouse, user, items } = req.body;
 
 	if (!items || items.length === 0) return next(new ErrorHandler("Please provide at least one product.", 400));
 
@@ -35,7 +35,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 	const user_ = await userModel.findByPk(user);
 	if (!user_) return next(new ErrorHandler("User not found.", 404));
 
-	let order = await orderModel.create({ address });
+	let order = await orderModel.create(req.body);
 
 	items.forEach(item => { item.orderId = order.id; });
 	console.log(items);
@@ -69,15 +69,18 @@ exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 
 	console.log(JSON.stringify(query));
 
-	const { rows, count } = await orderModel.findAndCountAll({
+	const counts = await orderModel.getCounts(query.where);
+
+	const orders = await orderModel.findAll({
 		...query,
 		include: includeOptions,
 		attributes: {
 			exclude: ["warehouseId", "userId"]
-		}
+		},
+		order: [['createdAt', 'DESC']]
 	});
 
-	res.status(200).json({ orders: rows, orderCount: count });
+	res.status(200).json({ orders, orderCount: orders.length, counts });
 })
 
 exports.getOrder = catchAsyncError(async (req, res, next) => {

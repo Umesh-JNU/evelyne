@@ -5,7 +5,7 @@ const transactionModel = require("./transaction.model");
 const { orderModel } = require("../order");
 const { userModel } = require("../user");
 
-const options = {
+const includeOptions = {
 	include: [{
 		model: orderModel,
 		as: "order",
@@ -40,7 +40,7 @@ exports.createTransaction = catchAsyncError(async (req, res, next) => {
 	let transaction = await transactionModel.create({ amount, mode, orderId: order.id });
 
 	transaction = await transactionModel.findByPk(transaction.id, {
-		...options
+		...includeOptions
 	});
 
 	res.status(201).json({ transaction });
@@ -52,6 +52,7 @@ exports.getAllTransaction = catchAsyncError(async (req, res, next) => {
 
 	const user = req.user;
 	console.log({ user });
+	const options = { ...includeOptions };
 	if (!user || user?.userRole?.role === 'user') {
 		console.log(!user)
 		options.include[0].where = { userId: req.userId }
@@ -60,7 +61,7 @@ exports.getAllTransaction = catchAsyncError(async (req, res, next) => {
 	console.log(options.include[0])
 	console.log(JSON.stringify(query));
 	const { rows, count } = await transactionModel.findAndCountAll({
-		...query, ...options
+		...query, ...options, order: [['createdAt', 'DESC']]
 	});
 	res.status(200).json({ transactions: rows, transactionCount: count });
 })
@@ -70,6 +71,7 @@ exports.getTransaction = catchAsyncError(async (req, res, next) => {
 	const { id } = req.params;
 
 	const user = req.user;
+	const options = { ...includeOptions };
 	if (!user || user?.userRole?.role === 'user') {
 		options.include[0].where = { userId: req.userId }
 	};

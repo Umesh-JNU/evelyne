@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { auth } = require("../../middlewares/auth");
 
-const { getAllOrder, getOrder } = require("./order.controller");
+const { getAllOrder, getOrder, countOrderItem } = require("./order.controller");
 
 router.get("/", auth, getAllOrder);
 router.get("/:id/", auth, getOrder);

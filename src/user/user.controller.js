@@ -84,7 +84,7 @@ exports.updateProfile = catchAsyncError(async (req, res, next) => {
 });
 
 exports.updatePassword = catchAsyncError(async (req, res, next) => {
-  const userId = req.userId;
+  const userId = req.userId || req.body.userId;
   const { password, confirmPassword } = req.body;
   if (!password || !confirmPassword)
     return next(
@@ -146,5 +146,7 @@ exports.verifyOTP = catchAsyncError(async (req, res, next) => {
 
   await otpModel.destroy({ where: { id: otpInstance.id } });
 
-  res.status(200).json({ message: "OTP verified successfully." });
+  res.status(200).json({
+    message: "OTP verified successfully.", userId: otpInstance.userId
+  });
 });

@@ -24,7 +24,7 @@ const orderItemModel = db.define("OrderItem", {
 
 const orderModel = db.define("Order", {
   status: {
-    type: DataTypes.ENUM("arrived", "in-bound", "out-bound", "in-transit"),
+    type: DataTypes.ENUM("arrived", "in-bound", "out-bound"),
     defaultValue: "in-bound",
   },
   address: {
@@ -39,7 +39,15 @@ const orderModel = db.define("Order", {
   { timestamps: true }
 );
 
+orderModel.getCounts = async function (query) {
+  return await this.findAll({
+    where: query,
+    attributes: ['status', [db.fn('COUNT', db.col('id')), 'count']],
+    group: ['status'],
+  });
+}
+
 orderModel.hasMany(orderItemModel, { foreignKey: "orderId", as: "items" });
 orderItemModel.belongsTo(orderModel, { foreignKey: "orderId", as: "order" });
 
-module.exports = {orderModel, orderItemModel};
+module.exports = { orderModel, orderItemModel };

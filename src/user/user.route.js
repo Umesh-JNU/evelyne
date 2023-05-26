@@ -7,9 +7,10 @@ const { create, login, updatePassword, getProfile, updateProfile, forgotPassword
 router.post("/register", create);
 router.post("/login", login);
 router.get("/profile", auth, getProfile);
-router.put("/reset-password", auth, updatePassword);
+router.put("/change-password", auth, updatePassword);
 router.put("/update-profile", auth, updateProfile);
 router.post("/forgot-password", forgotPassword);
 router.post("/verify-otp", verifyOTP);
+router.put("/reset-password", updatePassword);
 
 module.exports = router;

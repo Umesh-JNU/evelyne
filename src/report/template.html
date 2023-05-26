@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Client Orders</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border: 1px solid black;
+      padding: 8px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+
+<body>
+
+  {{#clients}}
+  <h2>{{clientName}}</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Date/Entry</th>
+        <th>Declaration</th>
+        <th>Product</th>
+        <th>Total Qty</th>
+        <th>Kg/Unit</th>
+        <th>Total Kg</th>
+        <th>Truck No</th>
+        <th>Comments</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#orders}}
+      <tr>
+        <td>{{No}}</td>
+        <td>{{Date}}</td>
+        <td>{{Declaration}}</td>
+        <td>{{Product}}</td>
+        <td>{{TotalQty}}</td>
+        <td>{{KgPerUnit}}</td>
+        <td>{{TotalKg}}</td>
+        <td>{{TruckNo}}</td>
+        <td>{{Comments}}</td>
+      </tr>
+      {{/orders}}
+    </tbody>
+  </table>
+  {{/clients}}
+</body>
+
+</html>
