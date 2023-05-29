@@ -72,7 +72,7 @@ exports.userController = {
       if (role === "controller")
         includeOptions[1].as = "warehouses";
 
-      includeOptions[0] = { ...includeOptions[0], where: { role } }
+      includeOptions[0].where = { role }
     }
 
     console.log({ includeOptions }, includeOptions[0].where);

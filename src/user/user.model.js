@@ -7,6 +7,19 @@ const validateEmail = (email) => {
   var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
   return re.test(email);
 };
+
+const random_profile = () => {
+  const img_urls = [
+    "https://cdn2.iconfinder.com/data/icons/avatars-60/5985/2-Boy-512.png",
+    "https://cdn2.iconfinder.com/data/icons/avatars-60/5985/4-Writer-1024.png",
+    "https://cdn2.iconfinder.com/data/icons/avatars-60/5985/40-School_boy-512.png",
+    "https://cdn2.iconfinder.com/data/icons/avatars-60/5985/12-Delivery_Man-128.png",
+    "https://cdn1.iconfinder.com/data/icons/user-pictures/100/boy-512.png",
+  ]
+
+  const idx = Math.floor(Math.random() * img_urls.length);
+  return img_urls[idx];
+}
 const userModel = db.define(
   "User",
   {
@@ -75,6 +88,10 @@ const userModel = db.define(
         notNull: { msg: "City is required" },
         notEmpty: { msg: "City is required" },
       },
+    },
+    avatar: {
+      type: DataTypes.STRING,
+      defaultValue: random_profile()
     }
   },
   {
