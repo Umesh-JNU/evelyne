@@ -25,7 +25,7 @@ const includeOptions = {
 
 exports.createTransaction = catchAsyncError(async (req, res, next) => {
 	console.log("create transaction", req.body);
-	const { orderId, amount, mode } = req.body;
+	const { orderId } = req.body;
 
 	const order = await orderModel.findByPk(orderId, {
 		include: [{
@@ -37,7 +37,7 @@ exports.createTransaction = catchAsyncError(async (req, res, next) => {
 	if (!order) return next(new ErrorHandler("Order not found.", 404));
 
 	console.log(order.toJSON())
-	let transaction = await transactionModel.create({ amount, mode, orderId: order.id });
+	let transaction = await transactionModel.create(req.body);
 
 	transaction = await transactionModel.findByPk(transaction.id, {
 		...includeOptions

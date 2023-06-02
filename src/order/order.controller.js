@@ -1,7 +1,7 @@
 const ErrorHandler = require("../../utils/errorHandler")
 const catchAsyncError = require("../../utils/catchAsyncError")
 const getFormattedQuery = require("../../utils/apiFeatures");
-const { orderModel, orderItemModel } = require("./order.model");
+const { orderModel, orderItemModel, subQueryAttr } = require("./order.model");
 const warehouseModel = require("../warehouse/warehouse.model");
 const { userModel } = require("../user/user.model");
 
@@ -75,6 +75,7 @@ exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 		...query,
 		include: includeOptions,
 		attributes: {
+			...subQueryAttr,
 			exclude: ["warehouseId", "userId"]
 		},
 		order: [['createdAt', 'DESC']]
@@ -112,14 +113,13 @@ exports.updateOrder = catchAsyncError(async (req, res, next) => {
 	console.log("update Order", req.body);
 	const { id } = req.params;
 
-	const [_, order] = await orderModel.update(req.body, {
+	const [isUpdated] = await orderModel.update(req.body, {
 		where: { id },
-		returning: true, // Return the updated order object
 	});
 
-	if (_ === 0) return next(new ErrorHandler("Order not found.", 404));
+	if (isUpdated === 0) return next(new ErrorHandler("Order not found.", 404));
 
-	res.status(200).json({ message: "Order updated successfully.", order });
+	res.status(200).json({ message: "Order updated successfully.", isUpdated });
 })
 
 exports.deleteOrder = catchAsyncError(async (req, res, next) => {

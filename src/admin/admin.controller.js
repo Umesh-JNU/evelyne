@@ -4,15 +4,47 @@ const { userModel, roleModel } = require("../user");
 const getFormattedQuery = require("../../utils/apiFeatures");
 const { warehouseModel } = require("../warehouse");
 
-const includeRole = {
-  model: roleModel,
-  as: "userRole",
-  attributes: ["role"]
+const includeRole = (role) => {
+  const roleObj = {
+    model: roleModel,
+    as: "userRole",
+    attributes: ["role"]
+  };
+
+  return role ? { ...roleObj, where: { role } } : roleObj;
 };
+
 const includeWarehouse = {
   model: warehouseModel,
-  as: 'warehouse',
-  attributes: ["id", "name", "capacity", "filled"]
+  as: "warehouse",
+  attributes: ["id", "name", "capacity", "filled"],
+};
+
+const includeWarehouses = {
+  model: warehouseModel,
+  as: "warehouses",
+  attributes: ["id", "name", "capacity", "filled"],
+  through: { attributes: [] }
+};
+
+const includeOptions = (role) => {
+  const options = [];
+  if (role) {
+    console.log({ role });
+    options.push(includeRole(role));
+    switch (role) {
+      case "controller":
+        options.push(includeWarehouses);
+        break;
+      case "manager":
+        options.push(includeWarehouse);
+        break;
+      default: break;
+    }
+  } else {
+    options.push(includeRole());
+  }
+  return options;
 };
 
 exports.userController = {
@@ -23,35 +55,35 @@ exports.userController = {
     const [userRole, _] = await roleModel.findOrCreate({ where: { role } });
 
     let user = await userModel.create({ ...req.body, roleId: userRole.id });
-    let includeOptions = [includeRole, includeWarehouse];
-    if (warehouses && warehouses.length > 0) {
-      switch (role) {
-        case "manager":
-          const warehouseId = warehouses[0];
-          const warehouse_ = await warehouseModel.findByPk(warehouseId);
-          if (!warehouse_) return next(new ErrorHandler("Warehouse not found", 404));
 
-          warehouse_.managerId = user.id;
-          await warehouse_.save();
-          break;
+    let options = includeOptions(role);
+    // if (warehouses && warehouses.length > 0) {
+    //   switch (role) {
+    //     case "manager":
+    //       const warehouseId = warehouses[0];
+    //       const warehouse_ = await warehouseModel.findByPk(warehouseId);
+    //       if (!warehouse_) return next(new ErrorHandler("Warehouse not found", 404));
 
-        case "controller":
-          const [warehouses_] = await warehouseModel.update({ controllerId: user.id }, {
-            where: { id: { [Op.in]: warehouses } }
-          });
+    //       warehouse_.managerId = user.id;
+    //       await warehouse_.save();
+    //       break;
 
-          if (!warehouses_) return next(new ErrorHandler("Warehouses not found.", 404));
+    //     case "controller":
+    //       const [warehouses_] = await warehouseModel.update({ controllerId: user.id }, {
+    //         where: { id: { [Op.in]: warehouses } }
+    //       });
 
-          includeOptions[1].as = 'warehouses';
-          break;
+    //       if (!warehouses_) return next(new ErrorHandler("Warehouses not found.", 404));
+    //       break;
 
-        default:
-          break;
-      }
-    }
+    //     default:
+    //       break;
+    //   }
+    // }
 
+    console.log({ options })
     user = await userModel.findByPk(user.id, {
-      include: includeOptions,
+      include: options,
       attributes: {
         exclude: ["roleId"]
       }
@@ -64,38 +96,25 @@ exports.userController = {
     console.log("all users", req.query);
 
     const query = getFormattedQuery("fullname", req.query);
-    let { role } = req.query;
+    const { role } = req.query;
 
-    let includeOptions = [includeRole, includeWarehouse];
-    if (role) {
-      console.log({ role })
-      if (role === "controller")
-        includeOptions[1].as = "warehouses";
-
-      includeOptions[0].where = { role }
-    }
-
-    console.log({ includeOptions }, includeOptions[0].where);
-    const { rows, count } = await userModel.findAndCountAll({
+    const users = await userModel.findAll({
       ...query,
-      include: includeOptions,
+      include: includeOptions(role),
       attributes: { exclude: ["roleId"] },
       order: [['createdAt', 'DESC']]
     });
 
-    res.status(200).json({ users: rows, usersCount: count });
+    res.status(200).json({ users, usersCount: users.length });
   }),
 
   getUser: catchAsyncError(async (req, res, next) => {
     console.log("get user");
-    let includeOptions = [includeRole, includeWarehouse];
-    if (req.query.warehouses) {
-      includeOptions[1].as = "warehouses";
-    }
-
     const { id } = req.params;
+    const { role } = req.query;
+
     const user = await userModel.findByPk(id, {
-      include: includeOptions,
+      include: includeOptions(role),
       attributes: { exclude: ["roleId"] }
     });
 
@@ -114,14 +133,13 @@ exports.userController = {
     console.log({ updateData });
     console.log({ id });
 
-    const [_, user] = await userModel.update(updateData, {
+    const [isUpdated] = await userModel.update(updateData, {
       where: { id },
-      returning: true, // Return the updated user object
     });
 
-    if (_ === 0) return next(new ErrorHandler("User not found.", 404));
+    if (isUpdated === 0) return next(new ErrorHandler("User not found.", 404));
 
-    res.status(200).json({ message: "User updated successfully.", user });
+    res.status(200).json({ message: "User updated successfully.", isUpdated });
   }),
 
   deleteUser: catchAsyncError(async (req, res, next) => {

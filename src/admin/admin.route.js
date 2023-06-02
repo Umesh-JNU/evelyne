@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { auth, authRole } = require("../../middlewares/auth");
+const { user, warehouse } = require("../../middlewares/validate");
 
 const { createController, getAllUsers, getUser, updateUser, deleteUser } = require('./admin.controller').userController;
 
@@ -11,6 +12,7 @@ const { createWarehouse, updateWarehouse, deleteWarehouse, getWarehouseOrder, my
 const { createOrder, getAllOrder, getOrder, updateOrder, deleteOrder } = require('../order');
 
 const { createTransaction, getAllTransaction, updateTransaction, getTransaction, deleteTransaction } = require('../transaction/transaction.controller');
+const { getWarehouseTransaction } = require('../warehouse/warehouse.controller');
 
 router.post("/controller", auth, authRole(['admin']), createController);
 router.post("/manager", auth, authRole(['admin']), createController);
@@ -27,8 +29,9 @@ router.route("/content/:id")
 
 router.post("/warehouse", auth, authRole(["admin"]), createWarehouse);
 router.get("/warehouse/orders", auth, authRole(["admin", "controller", "manager"]), getWarehouseOrder);
+router.get("/warehouse/transactions", auth, authRole(["admin", "controller", "manager"]), getWarehouseTransaction);
 router.get("/my-warehouse", auth, authRole(["admin", "controller", "manager"]), myWarehouse);
-router.put("/warehouse/assign", auth, authRole(["admin"]), assignHandler);
+router.put("/warehouse/assign", warehouse.assign, auth, authRole(["admin"]), assignHandler);
 router.route("/warehouse/:id")
   .put(auth, authRole(["admin"]), updateWarehouse)
   .delete(auth, authRole(["admin"]), deleteWarehouse);

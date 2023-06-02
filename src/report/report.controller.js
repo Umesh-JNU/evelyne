@@ -8,7 +8,7 @@ const templatePath = path.join(__dirname, 'template.html');
 const templateHtml = fs.readFileSync(templatePath, 'utf-8');
 
 var options = {
-  format: "A4",
+  format: "A3",
   orientation: "portrait",
   border: "10mm",
   header: {
@@ -54,33 +54,6 @@ const data = {
           Comments: 'Comment B'
         }
       ]
-    },
-    {
-      clientName: 'Client B',
-      orders: [
-        {
-          No: 1,
-          Date: '2023-05-03',
-          Declaration: 'Declaration C',
-          Product: 'Product C',
-          TotalQty: 8,
-          KgPerUnit: 2.5,
-          TotalKg: 20,
-          TruckNo: 'Truck C',
-          Comments: 'Comment C'
-        },
-        {
-          No: 2,
-          Date: '2023-05-04',
-          Declaration: 'Declaration D',
-          Product: 'Product D',
-          TotalQty: 12,
-          KgPerUnit: 1.5,
-          TotalKg: 18,
-          TruckNo: 'Truck D',
-          Comments: 'Comment D'
-        }
-      ]
     }
   ]
 };
@@ -94,12 +67,9 @@ var document = {
 };
 
 exports.getReport = catchAsyncError(async (req, res, next) => {
+  console.log("download report", req.query);
   const report = await pdf.create(document, options);
-  const today = new Date().toISOString().slice(0, 10);
-  console.log({today});
-  const filename = today + '.pdf';
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
+  res.setHeader('Content-Type', 'application/pdf');
   res.status(200).send(report);
 });
