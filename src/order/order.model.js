@@ -102,19 +102,41 @@ const orderModel = db.define("Order", {
     type: DataTypes.STRING
   },
   status: {
-    type: DataTypes.ENUM("arrived", "in-bound", "out-bound"),
+    type: DataTypes.ENUM("arrived", "out-bound", "in-bound"),
     defaultValue: "in-bound",
   },
 },
   { timestamps: true }
 );
 
-orderModel.getCounts = async function (query) {
+orderModel.getGrpCount = async function (query) {
   return await this.findAll({
     where: query,
     attributes: ['status', [db.fn('COUNT', db.col('id')), 'count']],
     group: ['status'],
   });
+}
+
+orderModel.getCounts = async function (query) {
+  const result = await this.getGrpCount(query);
+
+  const counts = {
+    arrived: 0,
+    'out-bound': 0,
+    'in-bound': 0,
+  };
+
+  for (let v in result) {
+    // console.log({ v }, result[v].dataValues)
+    const { status, count } = result[v].dataValues;
+    const val = result[v].dataValues;
+    console.log(val.status, val.count);
+
+    counts[status] = count;
+  }
+  console.log({ counts });
+
+  return counts;
 }
 
 const subQueryAttr = {
