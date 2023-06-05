@@ -1,5 +1,5 @@
 const transactionModel = require("./transaction.model");
-const transactionController = require("./transaction.controller");
+const { createTransaction, getAllTransaction, updateTransaction, getTransaction, deleteTransaction } = require("./transaction.controller");
 const transactionRoute = require("./transaction.route");
 
-module.exports = { transactionModel, transactionController, transactionRoute };
+module.exports = { transactionModel, createTransaction, getAllTransaction, updateTransaction, getTransaction, deleteTransaction, transactionRoute };

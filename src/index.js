@@ -3,7 +3,7 @@ const { warehouseRoute, warehouseModel, warehouseController } = require("./wareh
 const { transactionRoute, transactionModel, transactionController } = require("./transaction");
 const { invoiceRoute, invoiceModel, invoiceController } = require("./invoice");
 const { orderRoute, orderModel, orderController } = require("./order");
-const { adminRoute } = require("./admin");
+const { adminRoute, controllerRoute, managerRoute } = require("./admin");
 const { contentRoute } = require("./staticDetails");
 
 userModel.hasMany(orderModel, { foreignKey: "userId", as: "orders" });
@@ -37,6 +37,6 @@ module.exports = {
   transactionRoute,
   invoiceRoute,
   orderRoute,
-  adminRoute,
+  adminRoute, controllerRoute, managerRoute,
   contentRoute,
 };

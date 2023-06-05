@@ -4,6 +4,7 @@ const getFormattedQuery = require("../../utils/apiFeatures");
 const transactionModel = require("./transaction.model");
 const { orderModel } = require("../order");
 const { userModel } = require("../user");
+const { warehouseModel } = require("../warehouse");
 
 const includeOptions = {
 	include: [{
@@ -13,10 +14,17 @@ const includeOptions = {
 			model: userModel,
 			as: "user",
 			attributes: ["id", "fullname"]
+		}, {
+			model: warehouseModel,
+			as: "warehouse",
+			attributes: ["id", "name"],
+			include: [{
+				model: userModel,
+				as: "manager",
+				attributes: ["id", "fullname"]
+			}]
 		}],
-		attributes: {
-			exclude: ["userId",]
-		}
+		attributes: ["id", "status"]
 	}],
 	attributes: {
 		exclude: ["orderId",]
@@ -27,18 +35,10 @@ exports.createTransaction = catchAsyncError(async (req, res, next) => {
 	console.log("create transaction", req.body);
 	const { orderId } = req.body;
 
-	const order = await orderModel.findByPk(orderId, {
-		include: [{
-			model: userModel,
-			as: "user",
-			attributes: ["id", "fullname"],
-		}]
-	});
+	const order = await orderModel.findByPk(orderId);
 	if (!order) return next(new ErrorHandler("Order not found.", 404));
 
-	console.log(order.toJSON())
 	let transaction = await transactionModel.create(req.body);
-
 	transaction = await transactionModel.findByPk(transaction.id, {
 		...includeOptions
 	});

@@ -1,56 +1,70 @@
 const express = require('express');
-const router = express.Router();
 const { auth, authRole } = require("../../middlewares/auth");
-const { user, warehouse } = require("../../middlewares/validate");
+const { warehouse } = require("../../middlewares/validate");
 
 const { createController, getAllUsers, getUser, updateUser, deleteUser } = require('./admin.controller').userController;
 
-const { createContent, updateContent, deleteContent } = require("../staticDetails/content.controller");
+const { createContent, updateContent, deleteContent } = require("../staticDetails");
 
-const { createWarehouse, updateWarehouse, deleteWarehouse, getWarehouseOrder, myWarehouse, assignHandler } = require("../warehouse");
+const { createWarehouse, updateWarehouse, deleteWarehouse, myWarehouse, housesAndOrderCount, warehouseAndAllOrders, getWarehouseOrder, housesAndTransactionCount, getWarehouseTransaction, assignHandler } = require("../warehouse");
 
 const { createOrder, getAllOrder, getOrder, updateOrder, deleteOrder } = require('../order');
 
-const { createTransaction, getAllTransaction, updateTransaction, getTransaction, deleteTransaction } = require('../transaction/transaction.controller');
-const { getWarehouseTransaction } = require('../warehouse/warehouse.controller');
+const { createTransaction, getAllTransaction, getTransaction, updateTransaction, deleteTransaction } = require("../transaction");
 
-router.post("/controller", auth, authRole(['admin']), createController);
-router.post("/manager", auth, authRole(['admin']), createController);
-router.get("/users", auth, authRole(["admin"]), getAllUsers);
-router.route("/user/:id")
+// --------------------------------------------------------------------------------------------------------------
+const adminRoute = express.Router();
+
+adminRoute.post("/controller", auth, authRole(['admin']), createController);
+adminRoute.post("/manager", auth, authRole(['admin']), createController);
+adminRoute.get("/users", auth, authRole(["admin"]), getAllUsers);
+adminRoute.route("/user/:id")
   .get(auth, authRole(["admin"]), getUser)
   .put(auth, authRole(["admin"]), updateUser)
   .delete(auth, authRole(["admin"]), deleteUser);
 
-router.post("/content", auth, authRole(["admin"]), createContent);
-router.route("/content/:id")
+adminRoute.post("/content", auth, authRole(["admin"]), createContent);
+adminRoute.route("/content/:id")
   .put(auth, authRole(["admin"]), updateContent)
   .delete(auth, authRole(["admin"]), deleteContent);
 
-router.post("/warehouse", auth, authRole(["admin"]), createWarehouse);
-router.get("/warehouse/orders", auth, authRole(["admin", "controller", "manager"]), getWarehouseOrder);
-router.get("/warehouse/transactions", auth, authRole(["admin", "controller", "manager"]), getWarehouseTransaction);
-router.get("/my-warehouse", auth, authRole(["admin", "controller", "manager"]), myWarehouse);
-router.put("/warehouse/assign", warehouse.assign, auth, authRole(["admin"]), assignHandler);
-router.route("/warehouse/:id")
+adminRoute.post("/warehouse", auth, authRole(["admin"]), createWarehouse);
+adminRoute.put("/warehouse/assign", warehouse.assign, auth, authRole(["admin"]), assignHandler);
+adminRoute.route("/warehouse/:id")
   .put(auth, authRole(["admin"]), updateWarehouse)
   .delete(auth, authRole(["admin"]), deleteWarehouse);
 
-router.post("/order", auth, authRole(['admin', 'manager']), createOrder);
-router.get("/orders", auth, authRole(['admin', 'manager', 'controller']), getAllOrder);
+adminRoute.post("/order", auth, authRole(['admin', 'manager']), createOrder);
+adminRoute.get("/orders", auth, authRole(['admin']), getAllOrder);
 
-router.route("/order/:id")
+adminRoute.route("/order/:id")
   .put(auth, authRole(['admin', 'manager']), updateOrder)
-  .get(auth, authRole(['admin', 'manager', 'controller']), getOrder)
+  .get(auth, authRole(['admin']), getOrder)
   .delete(auth, authRole(['admin', 'manager']), deleteOrder);
 
-router.post("/transaction", auth, authRole(['admin', 'manager']), createTransaction);
-router.get("/transactions", auth, authRole(['admin', 'manager', 'controller']), getAllTransaction);
+adminRoute.post("/transaction", auth, authRole(['admin', 'manager']), createTransaction);
+adminRoute.get("/transactions", auth, authRole(['admin']), getAllTransaction);
 
-router.route("/transaction/:id")
+adminRoute.route("/transaction/:id")
   .put(auth, authRole(['admin', 'manager']), updateTransaction)
-  .get(auth, authRole(['admin', 'manager', 'controller']), getTransaction)
+  .get(auth, authRole(['admin']), getTransaction)
   .delete(auth, authRole(['admin', 'manager']), deleteTransaction);
 
+// --------------------------------------------------------------------------------------------------------------
+const controllerRoute = express.Router();
 
-module.exports = router;
+controllerRoute.get("/warehouse/orders/count", auth, authRole(["controller"]), housesAndOrderCount);
+controllerRoute.get("/all-warehouse/orders", auth, authRole(["controller"]), warehouseAndAllOrders);
+controllerRoute.get("/warehouse/orders", auth, authRole(["controller"]), getWarehouseOrder);
+controllerRoute.get("/warehouse/transactions", auth, authRole(["controller"]), getWarehouseTransaction);
+controllerRoute.get("/warehouse/transactions/count", auth, authRole(["controller"]), housesAndTransactionCount);
+// controllerRoute.get("/my-warehouse", auth, authRole(["controller"]), myWarehouse);
+
+// --------------------------------------------------------------------------------------------------------------
+const managerRoute = express.Router();
+
+managerRoute.get("/warehouse/orders", auth, authRole(["manager"]), getWarehouseOrder);
+managerRoute.get("/warehouse/transactions", auth, authRole(["manager"]), getWarehouseTransaction);
+managerRoute.get("/my-warehouse", auth, authRole(["manager"]), myWarehouse);
+
+module.exports = { adminRoute, controllerRoute, managerRoute };

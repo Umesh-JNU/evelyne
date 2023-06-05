@@ -2,11 +2,11 @@ const ErrorHandler = require("../../utils/errorHandler")
 const catchAsyncError = require("../../utils/catchAsyncError")
 const getFormattedQuery = require("../../utils/apiFeatures");
 const warehouseModel = require("./warehouse.model");
-const { userModel } = require("../user/user.model");
-const { orderModel, orderItemModel, subQueryAttr } = require("../order/order.model");
-const { db } = require("../../config/database");
-const { Op } = require("sequelize");
+const { userModel, roleModel } = require("../user/user.model");
+const { orderModel, orderItemModel } = require("../order/order.model");
 const transactionModel = require("../transaction/transaction.model");
+const { Op } = require("sequelize");
+const { db } = require("../../config/database");
 
 const includeOptions = [{
 	model: userModel,
@@ -78,82 +78,166 @@ exports.deleteWarehouse = catchAsyncError(async (req, res, next) => {
 	res.status(200).json({ message: "Warehouse Deleted Successfully.", warehouse });
 })
 
-const getManager = async (userId, next) => {
-	const manager = await userModel.findByPk(userId, {
-		include: [{
-			model: warehouseModel,
-			as: "warehouse",
-			attributes: ["id"]
-		}],
-	})
-
-	if (!manager) return next(new ErrorHandler("Manager not found.", 404));
-
-	if (!manager.warehouse) return next(new ErrorHandler("No warehouse assigned", 200));
-
-	return manager;
-}
-
 exports.myWarehouse = catchAsyncError(async (req, res, next) => {
+	console.log("my warehouse/s");
 	const userId = req.userId;
-	const manager = await getManager(userId, next);
+	const handler = await userModel.getHandler(userId, next);
 
-	const warehouse = await warehouseModel.findByPk(manager.warehouse.id, {
-		attributes: { exclude: ["controllerId", "managerId"] }
+	switch (handler.userRole.role) {
+		case "controller":
+			return res.status(200).json({
+				warehouses:
+					await handler.getWarehouses({
+						joinTableAttributes: [],
+						include: includeOptions,
+						attributes: { exclude: ["managerId"] }
+					})
+			});
+
+		case "manager":
+			return res.status(200).json({
+				warehouse:
+					await handler.getWarehouse({
+						attributes: ["id", "name", "capacity", "filled"]
+					})
+			});
+
+		default:
+			return next(new ErrorHandler("Invalid manager/controller.", 400));
+	}
+})
+
+exports.housesAndOrderCount = catchAsyncError(async (req, res, next) => {
+	const userId = req.userId;
+	const handler = await userModel.getHandler(userId, next);
+	const warehouses = await handler.getWarehouses({
+		joinTableAttributes: [],
+		include: [{
+			model: userModel,
+			as: 'manager',
+			attributes: ['id', 'fullname']
+		}],
+		attributes: { exclude: ["managerId"] }
 	});
-	if (!warehouse) return next(new ErrorHandler("Warehouse not found", 404));
 
-	res.status(200).json({ warehouse });
+	const housesAndOrderCounts = await Promise.all(warehouses.map(async (warehouse) => {
+		const { counts, total } = await orderModel.getCounts({ warehouseId: warehouse.id });
+
+		return { warehouse, total, counts };
+	}));
+
+	res.json({ housesAndOrderCounts });
 })
 
 exports.getWarehouseOrder = catchAsyncError(async (req, res, next) => {
+	const userId = req.userId;
+	const handler = await userModel.getHandler(userId, next);
+
+	let orders;
+	switch (handler.userRole.role) {
+		case "controller":
+			const { warehouseId } = req.query;
+			const warehouse = await warehouseModel.findByPk(warehouseId, {
+				include: [{
+					model: userModel,
+					as: "manager",
+					attributes: ["id", "fullname"]
+				}],
+				attributes: { exclude: ["managerId"] }
+			});
+
+			orders = await orderModel.warehouseOrders(warehouseId);
+
+			return res.json({ warehouse, orders });
+
+		case "manager":
+			const wId = (await handler.getWarehouse()).id;
+
+			orders = await orderModel.warehouseOrders(wId);
+
+			return res.status(200).json({ orders });
+
+		default:
+			return next(new ErrorHandler("Invalid manager/controller.", 400));
+	}
+})
+
+exports.warehouseAndAllOrders = catchAsyncError(async (req, res, next) => {
 	console.log("get warehouse orders");
 	const userId = req.userId;
-	const manager = await getManager(userId, next);
+	const handler = await userModel.getHandler(userId, next);
 
-	let whereQuery = { warehouseId: manager.warehouse.id };
-
-	const counts = await orderModel.getCounts(whereQuery);
-	console.log({ counts });
-
-	const orders = await orderModel.findAll({
-		where: whereQuery,
-		attributes: subQueryAttr,
+	const warehouses = await handler.getWarehouses({
+		joinTableAttributes: [],
 		include: [{
-			model: orderItemModel,
-			as: "items",
-			attributes: ["id", "name", "quantity"]
-		}]
-	})
+			model: userModel,
+			as: "manager",
+			attributes: ["id", "fullname"]
+		}],
+		attributes: { exclude: ["managerId"] }
+	});
 
-	res.status(200).json({ orders, counts });
+	const housesAndOrders = await Promise.all(warehouses.map(async (warehouse) => {
+		const orders = await orderModel.warehouseOrders(warehouse.id);
+		console.log({ orders });
+
+		return { warehouse, orders };
+	}))
+
+	return res.status(200).json({ housesAndOrders });
+})
+
+exports.housesAndTransactionCount = catchAsyncError(async (req, res, next) => {
+	const userId = req.userId;
+	const handler = await userModel.getHandler(userId, next);
+	const warehouses = await handler.getWarehouses({
+		joinTableAttributes: [],
+		include: [{
+			model: userModel,
+			as: 'manager',
+			attributes: ['id', 'fullname']
+		}],
+		attributes: { exclude: ["managerId"] }
+	});
+
+	const housesAndTransCount = await Promise.all(warehouses.map(async (warehouse) => {
+		const { counts, total } = await transactionModel.getCounts({ warehouseId: warehouse.id });
+
+		return { warehouse, total, counts };
+	}));
+
+	res.json({ housesAndTransCount });
 })
 
 exports.getWarehouseTransaction = catchAsyncError(async (req, res, next) => {
 	console.log("get warehouse transaction");
 	const userId = req.userId;
-	const manager = await getManager(userId, next);
+	const handler = await userModel.getHandler(userId, next);
 
-	let whereQuery = { warehouseId: manager.warehouse.id };
+	let transactions;
+	switch (handler.userRole.role) {
+		case "controller":
+			const { warehouseId } = req.query;
+			const warehouse = await warehouseModel.findByPk(warehouseId, {
+				include: [{
+					model: userModel,
+					as: "manager",
+					attributes: ["id", "fullname"]
+				}],
+				attributes: { exclude: ["managerId"] }
+			});
 
-	const transactions = await transactionModel.findAll({
-		include: [{
-			model: orderModel,
-			as: "order",
-			attributes: ["id", "status"],
-			where: whereQuery,
-			include: [{
-				model: userModel,
-				as: "user",
-				attributes: ["id", "fullname"]
-			}]
-		}],
-		attributes: {
-			exclude: ["orderId"]
-		}
-	})
+			transactions = await transactionModel.warehouseTrans(warehouseId);
+			return res.status(200).json({ warehouse, transactions });
 
-	res.status(200).json({ transactions });
+		case "manager":
+			const wId = (await handler.getWarehouse()).id;
+			transactions = await transactionModel.warehouseTrans(wId);
+			return res.status(200).json({ transactions });
+
+		default:
+			return next(new ErrorHandler("Invalid manager/controller.", 400));
+	}
 })
 
 exports.assignHandler = catchAsyncError(async (req, res, next) => {

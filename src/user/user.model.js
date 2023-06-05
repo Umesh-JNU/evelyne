@@ -146,6 +146,20 @@ userModel.getUpdateFields = function (userData) {
   );
 };
 
+userModel.getHandler = async function (userId, next) {
+	const handler = await this.findByPk(userId, {
+		include: [{
+			model: roleModel,
+			as: "userRole",
+			attributes: ["role"]
+		}],
+	});
+
+	if (!handler) return next(new ErrorHandler("Manager/Controller not found.", 404));
+
+	return handler;
+};
+
 const roleModel = db.define(
   "Role",
   {

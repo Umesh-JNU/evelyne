@@ -109,6 +109,34 @@ const orderModel = db.define("Order", {
   { timestamps: true }
 );
 
+orderModel.warehouseOrders = async function (warehouseId) {
+  return await orderModel.findAll({
+    where: { warehouseId },
+    attributes: {
+      include: [
+        [
+          // Note the wrapping parentheses in the call below!
+          db.literal(`(
+              SELECT COUNT(*)
+              FROM OrderItems AS item
+              WHERE	item.orderId = Order.id
+          )`),
+          'itemCount'
+        ],
+        [
+          db.literal(`(
+              SELECT SUM(quantity)
+              FROM OrderItems AS item
+              WHERE	item.orderId = Order.id
+          )`),
+          'totalWeight'
+        ]
+      ],
+      exclude: [...Object.keys(orderModel.rawAttributes).filter(attr => !["id", "status", "createdAt"].includes(attr)), "userId", "warehouseId"]
+    },
+  })
+}
+
 orderModel.getGrpCount = async function (query) {
   return await this.findAll({
     where: query,
@@ -126,6 +154,7 @@ orderModel.getCounts = async function (query) {
     'in-bound': 0,
   };
 
+  let total = 0;
   for (let v in result) {
     // console.log({ v }, result[v].dataValues)
     const { status, count } = result[v].dataValues;
@@ -133,35 +162,14 @@ orderModel.getCounts = async function (query) {
     console.log(val.status, val.count);
 
     counts[status] = count;
+    total += count;
   }
   console.log({ counts });
 
-  return counts;
+  return { counts, total };
 }
-
-const subQueryAttr = {
-  include: [
-    [
-      // Note the wrapping parentheses in the call below!
-      db.literal(`(
-          SELECT COUNT(*)
-          FROM OrderItems AS item
-          WHERE	item.orderId = Order.id
-      )`),
-      'itemCount'
-    ],
-    [
-      db.literal(`(
-          SELECT SUM(quantity)
-          FROM OrderItems AS item
-          WHERE	item.orderId = Order.id
-      )`),
-      'totalWeight'
-    ]
-  ]
-};
 
 orderModel.hasMany(orderItemModel, { foreignKey: "orderId", as: "items" });
 orderItemModel.belongsTo(orderModel, { foreignKey: "orderId", as: "order" });
 
-module.exports = { orderModel, orderItemModel, subQueryAttr };
+module.exports = { orderModel, orderItemModel };

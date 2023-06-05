@@ -1,4 +1,4 @@
 const adminController = require("./admin.controller");
-const adminRoute = require("./admin.route");
+const { adminRoute, controllerRoute, managerRoute } = require("./admin.route");
 
-module.exports = { adminController, adminRoute };
+module.exports = { adminController, adminRoute, controllerRoute, managerRoute };
