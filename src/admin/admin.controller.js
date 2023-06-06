@@ -17,13 +17,13 @@ const includeRole = (role) => {
 const includeWarehouse = {
   model: warehouseModel,
   as: "warehouse",
-  attributes: ["id", "name", "capacity", "filled"],
+  attributes: ["id", "name", "image", "capacity", "filled"],
 };
 
 const includeWarehouses = {
   model: warehouseModel,
   as: "warehouses",
-  attributes: ["id", "name", "capacity", "filled"],
+  attributes: ["id", "name", "image", "capacity", "filled"],
   through: { attributes: [] }
 };
 

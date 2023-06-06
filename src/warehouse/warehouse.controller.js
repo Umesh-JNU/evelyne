@@ -98,7 +98,7 @@ exports.myWarehouse = catchAsyncError(async (req, res, next) => {
 			return res.status(200).json({
 				warehouse:
 					await handler.getWarehouse({
-						attributes: ["id", "name", "capacity", "filled"]
+						attributes: ["id", "name", "image", "capacity", "filled"]
 					})
 			});
 
@@ -153,7 +153,7 @@ exports.getWarehouseOrder = catchAsyncError(async (req, res, next) => {
 		case "manager":
 			const wId = (await handler.getWarehouse())?.id;
 			if (!wId) return next(new ErrorHandler("Warehouse not assigned.", 400));
-			
+
 			orders = await orderModel.warehouseOrders(wId);
 
 			return res.status(200).json({ orders });
