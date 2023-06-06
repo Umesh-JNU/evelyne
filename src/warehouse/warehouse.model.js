@@ -11,7 +11,7 @@ const warehouseModel = db.define(
         notEmpty: { msg: "A warehouse name can't be empty." },
         notNull: { msg: "A warehouse name can't be null" },
       },
-    }, 
+    },
     capacity: {
       type: DataTypes.INTEGER,
       defaultValue: 1000,
@@ -28,11 +28,20 @@ const warehouseModel = db.define(
       defaultValue: 0,
       validate: {
         isPositiveInteger(value) {
-          console.log({value});
+          console.log({ value });
           if (value && !Number.isInteger(value) || value < 0) {
             throw new Error("Current Capacity must be a positive integer");
           }
         },
+      },
+    },
+    image: {
+      type: DataTypes.STRING,
+      defaultValue: "https://cdn0.iconfinder.com/data/icons/containers/512/palet03.png",
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: "Image for warehouse is required." },
+        notNull: { msg: "Image for warehouse is required." },
       },
     }
   },

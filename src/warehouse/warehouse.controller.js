@@ -151,8 +151,9 @@ exports.getWarehouseOrder = catchAsyncError(async (req, res, next) => {
 			return res.json({ warehouse, orders });
 
 		case "manager":
-			const wId = (await handler.getWarehouse()).id;
-
+			const wId = (await handler.getWarehouse())?.id;
+			if (!wId) return next(new ErrorHandler("Warehouse not assigned.", 400));
+			
 			orders = await orderModel.warehouseOrders(wId);
 
 			return res.status(200).json({ orders });
@@ -231,7 +232,9 @@ exports.getWarehouseTransaction = catchAsyncError(async (req, res, next) => {
 			return res.status(200).json({ warehouse, transactions });
 
 		case "manager":
-			const wId = (await handler.getWarehouse()).id;
+			const wId = (await handler.getWarehouse())?.id;
+			if (!wId) return next(new ErrorHandler("Warehouse not assigned.", 400));
+
 			transactions = await transactionModel.warehouseTrans(wId);
 			return res.status(200).json({ transactions });
 
@@ -245,15 +248,20 @@ exports.assignHandler = catchAsyncError(async (req, res, next) => {
 	const { warehouse, warehouses, controllerId, managerId } = req.body;
 
 	if (controllerId) {
-		const controller = await userModel.findByPk(controllerId);
+		const controller = await userModel.getHandler(controllerId, next);
 		if (!controller) return next(new ErrorHandler("Controller not found.", 404));
+
+		console.log({ controller });
+		if (controller.userRole.role !== "controller") return next(new ErrorHandler("Invalid Controller.", 400));
 
 		const something = await controller.addWarehouses(warehouses);
 		console.log({ something })
 	}
 	else if (managerId) {
-		const manager = await userModel.findByPk(managerId);
+		const manager = await userModel.getHandler(managerId, next);
 		if (!manager) return next(new ErrorHandler("Manager not found.", 404));
+
+		if (manager.userRole.role !== "manager") return next(new ErrorHandler("Invalid Manager.", 400));
 
 		const warehouse_ = await warehouseModel.findByPk(warehouse);
 		if (!warehouse_) return next(new ErrorHandler("Warehouse not found.", 404));

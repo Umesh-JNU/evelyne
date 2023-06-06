@@ -56,6 +56,7 @@ const controllerRoute = express.Router();
 controllerRoute.get("/warehouse/orders/count", auth, authRole(["controller"]), housesAndOrderCount);
 controllerRoute.get("/all-warehouse/orders", auth, authRole(["controller"]), warehouseAndAllOrders);
 controllerRoute.get("/warehouse/orders", auth, authRole(["controller"]), getWarehouseOrder);
+controllerRoute.get("/warehouse/order/:id", auth, authRole(["controller"]), getOrder);
 controllerRoute.get("/warehouse/transactions", auth, authRole(["controller"]), getWarehouseTransaction);
 controllerRoute.get("/warehouse/transactions/count", auth, authRole(["controller"]), housesAndTransactionCount);
 // controllerRoute.get("/my-warehouse", auth, authRole(["controller"]), myWarehouse);
@@ -64,6 +65,7 @@ controllerRoute.get("/warehouse/transactions/count", auth, authRole(["controller
 const managerRoute = express.Router();
 
 managerRoute.get("/warehouse/orders", auth, authRole(["manager"]), getWarehouseOrder);
+managerRoute.get("/warehouse/order/:id", auth, authRole(["manager"]), getOrder);
 managerRoute.get("/warehouse/transactions", auth, authRole(["manager"]), getWarehouseTransaction);
 managerRoute.get("/my-warehouse", auth, authRole(["manager"]), myWarehouse);
 
