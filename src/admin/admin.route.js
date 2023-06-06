@@ -52,23 +52,26 @@ adminRoute.route("/transaction/:id")
 
 // --------------------------------------------------------------------------------------------------------------
 const controllerRoute = express.Router();
+const authController = authRole(["controller"]);
 
-controllerRoute.get("/warehouse/orders/count", auth, authRole(["controller"]), housesAndOrderCount);
-controllerRoute.get("/all-warehouse/orders", auth, authRole(["controller"]), warehouseAndAllOrders);
-controllerRoute.get("/warehouse/orders", auth, authRole(["controller"]), getWarehouseOrder);
-controllerRoute.get("/warehouse/order/:id", auth, authRole(["controller"]), getOrder);
-controllerRoute.get("/warehouse/transactions", auth, authRole(["controller"]), getWarehouseTransaction);
-controllerRoute.get("/warehouse/transaction/:id", auth, authRole(["controller"]), getTransaction);
-controllerRoute.get("/warehouse/transactions/count", auth, authRole(["controller"]), housesAndTransactionCount);
-// controllerRoute.get("/my-warehouse", auth, authRole(["controller"]), myWarehouse);
+controllerRoute.get("/warehouse/orders/count", auth, authController, housesAndOrderCount);
+controllerRoute.get("/warehouse/orders", auth, authController, getWarehouseOrder);
+controllerRoute.get("/order/:id", auth, authController, getOrder);
+controllerRoute.get("/all-warehouse/orders", auth, authController, warehouseAndAllOrders);
+controllerRoute.get("/warehouse/transactions/count", auth, authController, housesAndTransactionCount);
+controllerRoute.get("/warehouse/transactions", auth, authController, getWarehouseTransaction);
+controllerRoute.get("/transaction/:id", auth, authController, getTransaction);
+// controllerRoute.get("/my-warehouse", auth, authController, myWarehouse);
 
 // --------------------------------------------------------------------------------------------------------------
 const managerRoute = express.Router();
+const authManager = authRole(["manager"]);
 
-managerRoute.get("/warehouse/orders", auth, authRole(["manager"]), getWarehouseOrder);
-managerRoute.get("/warehouse/order/:id", auth, authRole(["manager"]), getOrder);
-managerRoute.get("/warehouse/transactions", auth, authRole(["manager"]), getWarehouseTransaction);
-managerRoute.get("/warehouse/transaction/:id", auth, authRole(["manager"]), getTransaction);
-managerRoute.get("/my-warehouse", auth, authRole(["manager"]), myWarehouse);
+managerRoute.post("/order", auth, authManager, createOrder);
+managerRoute.get("/warehouse/orders", auth, authManager, getWarehouseOrder);
+managerRoute.get("/order/:id", auth, authManager, getOrder);
+managerRoute.get("/warehouse/transactions", auth, authManager, getWarehouseTransaction);
+managerRoute.get("/transaction/:id", auth, authManager, getTransaction);
+managerRoute.get("/my-warehouse", auth, authManager, myWarehouse);
 
 module.exports = { adminRoute, controllerRoute, managerRoute };
