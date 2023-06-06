@@ -156,7 +156,7 @@ exports.getWarehouseOrder = catchAsyncError(async (req, res, next) => {
 
 			orders = await orderModel.warehouseOrders(wId);
 
-			return res.status(200).json({ orders });
+			return res.status(200).json({ orders, image: "https://cdn0.iconfinder.com/data/icons/containers/512/palet03.png" });
 
 		default:
 			return next(new ErrorHandler("Invalid manager/controller.", 400));
