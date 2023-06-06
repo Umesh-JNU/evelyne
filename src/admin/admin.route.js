@@ -58,6 +58,7 @@ controllerRoute.get("/all-warehouse/orders", auth, authRole(["controller"]), war
 controllerRoute.get("/warehouse/orders", auth, authRole(["controller"]), getWarehouseOrder);
 controllerRoute.get("/warehouse/order/:id", auth, authRole(["controller"]), getOrder);
 controllerRoute.get("/warehouse/transactions", auth, authRole(["controller"]), getWarehouseTransaction);
+controllerRoute.get("/warehouse/transaction/:id", auth, authRole(["controller"]), getTransaction);
 controllerRoute.get("/warehouse/transactions/count", auth, authRole(["controller"]), housesAndTransactionCount);
 // controllerRoute.get("/my-warehouse", auth, authRole(["controller"]), myWarehouse);
 
@@ -67,6 +68,7 @@ const managerRoute = express.Router();
 managerRoute.get("/warehouse/orders", auth, authRole(["manager"]), getWarehouseOrder);
 managerRoute.get("/warehouse/order/:id", auth, authRole(["manager"]), getOrder);
 managerRoute.get("/warehouse/transactions", auth, authRole(["manager"]), getWarehouseTransaction);
+managerRoute.get("/warehouse/transaction/:id", auth, authRole(["manager"]), getTransaction);
 managerRoute.get("/my-warehouse", auth, authRole(["manager"]), myWarehouse);
 
 module.exports = { adminRoute, controllerRoute, managerRoute };
