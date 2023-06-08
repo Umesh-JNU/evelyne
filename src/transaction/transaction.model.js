@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../../config/database");
-const { orderModel } = require("../order");
-const { userModel } = require("../user");
+const { orderModel } = require("../order/order.model");
+const { userModel } = require("../user/user.model");
 const warehouseModel = require("../warehouse/warehouse.model");
 
 const transactionModel = db.define(

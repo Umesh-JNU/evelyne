@@ -92,14 +92,14 @@ const orderModel = db.define("Order", {
     type: DataTypes.STRING
   },
   manager_valid: {
-    type: DataTypes.STRING
+    type: DataTypes.BOOLEAN
   },
   customs: {
     type: DataTypes.STRING
   },
   // Client name,
   client_valid: {
-    type: DataTypes.STRING
+    type: DataTypes.BOOLEAN
   },
   status: {
     type: DataTypes.ENUM("arrived", "out-bound", "in-bound"),

@@ -34,7 +34,7 @@ adminRoute.route("/warehouse/:id")
   .put(auth, authRole(["admin"]), updateWarehouse)
   .delete(auth, authRole(["admin"]), deleteWarehouse);
 
-adminRoute.post("/order", auth, authRole(['admin', 'manager']), createOrder);
+adminRoute.post("/order", auth, authRole(['admin']), createOrder);
 adminRoute.get("/orders", auth, authRole(['admin']), getAllOrder);
 
 adminRoute.route("/order/:id")

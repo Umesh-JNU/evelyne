@@ -4,6 +4,7 @@ const getFormattedQuery = require("../../utils/apiFeatures");
 const { orderModel, orderItemModel } = require("./order.model");
 const warehouseModel = require("../warehouse/warehouse.model");
 const { userModel } = require("../user/user.model");
+const transactionModel = require("../transaction/transaction.model");
 
 const includeItems = {
 	model: orderItemModel,
@@ -21,10 +22,16 @@ const includeUser = {
 	attributes: ["id", "fullname"],
 };
 
+const includeTransaction = {
+	model: transactionModel,
+	as: "transaction",
+	attributes: { exclude: ["orderId"] }
+};
+
 const includeOptions = (isIncludeUser = false) => {
 	if (isIncludeUser) return [includeItems, includeWarehouse, includeUser];
 
-	return [includeItems, includeWarehouse];
+	return [includeItems, includeWarehouse, includeTransaction];
 }
 
 exports.createOrder = catchAsyncError(async (req, res, next) => {
@@ -115,6 +122,7 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 	});
 	if (!order) return next(new ErrorHandler("Order not found", 404));
 
+	console.log({ order })
 	res.status(200).json({ order });
 })
 
