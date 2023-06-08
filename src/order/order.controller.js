@@ -31,7 +31,7 @@ const includeTransaction = {
 const includeOptions = (isIncludeUser = false) => {
 	if (isIncludeUser) return [includeItems, includeWarehouse, includeUser];
 
-	return [includeItems, includeWarehouse, includeTransaction];
+	return [includeItems, includeUser, includeWarehouse, includeTransaction];
 }
 
 exports.createOrder = catchAsyncError(async (req, res, next) => {
