@@ -245,7 +245,7 @@ exports.getWarehouseTransaction = catchAsyncError(async (req, res, next) => {
 
 exports.assignHandler = catchAsyncError(async (req, res, next) => {
 	console.log("assign handler", req.body);
-	const { warehouse, warehouses, controllerId, managerId } = req.body;
+	const { warehouse, warehouses, controllerId, managerId, controllers, warehouseId } = req.body;
 
 	if (controllerId) {
 		const controller = await userModel.getHandler(controllerId, next);
@@ -268,6 +268,13 @@ exports.assignHandler = catchAsyncError(async (req, res, next) => {
 
 		warehouse_.managerId = managerId;
 		await warehouse_.save();
+	}
+	else if (warehouseId) {
+		const house = await warehouseModel.findByPk(warehouseId);
+		if (!house) return next(new ErrorHandler("Warehouse not found.", 404));
+
+		const assign = await house.addController(controllers);
+		console.log({ assign })
 	}
 	else return next(new ErrorHandler("Something went wrong", 500));
 

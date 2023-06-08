@@ -8,7 +8,7 @@ class Validate {
     }
 
     this.warehouseAttr = {
-      assign: ["warehouses", "controllerId", "warehouse", "managerId"]
+      assign: ["warehouses", "controllerId", "warehouse", "managerId", "controllers", "warehouseId"]
     }
 
     this.missingFields = (fields, req) => {
@@ -27,6 +27,12 @@ class Validate {
 
       if (!reqFields.has("controllerId") && reqFields.has("warehouses"))
         return 'Required Field controllerId';
+
+      if (reqFields.has("controllers") && !reqFields.has("warehouseId"))
+        return 'Required Field warehouseId';
+
+      if (!reqFields.has("controllers") && reqFields.has("warehouseId"))
+        return 'Required Field controllers';
 
       if (reqFields.has("managerId") && !reqFields.has("warehouse"))
         return 'Required Field warehouse';

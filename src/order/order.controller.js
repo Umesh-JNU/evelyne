@@ -19,7 +19,7 @@ const includeWarehouse = {
 const includeUser = {
 	model: userModel,
 	as: "user",
-	attributes: ["id", "fullname"],
+	attributes: ["id", "fullname", "avatar"],
 };
 
 const includeTransaction = {
