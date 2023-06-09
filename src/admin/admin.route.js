@@ -6,7 +6,7 @@ const { createController, getAllUsers, getUser, updateUser, deleteUser } = requi
 
 const { createContent, updateContent, deleteContent } = require("../staticDetails");
 
-const { createWarehouse, updateWarehouse, deleteWarehouse, myWarehouse, housesAndOrderCount, warehouseAndAllOrders, getWarehouseOrder, housesAndTransactionCount, getWarehouseTransaction, assignHandler } = require("../warehouse");
+const { createWarehouse, updateWarehouse, deleteWarehouse, myWarehouse, housesAndOrderCount, warehouseAndAllOrders, getWarehouseOrder, housesAndTransactionCount, getWarehouseTransaction, assignHandler, removeHandler } = require("../warehouse");
 
 const { createOrder, getAllOrder, getOrder, updateOrder, deleteOrder } = require('../order');
 
@@ -30,6 +30,7 @@ adminRoute.route("/content/:id")
 
 adminRoute.post("/warehouse", auth, authRole(["admin"]), createWarehouse);
 adminRoute.put("/warehouse/assign", warehouse.assign, auth, authRole(["admin"]), assignHandler);
+adminRoute.put("/warehouse/remove", warehouse.remove, auth, authRole(["admin"]), removeHandler);
 adminRoute.route("/warehouse/:id")
   .put(auth, authRole(["admin"]), updateWarehouse)
   .delete(auth, authRole(["admin"]), deleteWarehouse);

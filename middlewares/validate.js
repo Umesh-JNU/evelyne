@@ -40,6 +40,21 @@ class Validate {
       if (!reqFields.has("managerId") && reqFields.has("warehouse"))
         return 'Required Field managerId';
     }
+
+    this.warehouseRemove = (req) => {
+      const reqFields = new Set(Object.keys(req.body));
+      if (reqFields.size === 0)
+        return "Required Fields `controllerId and warehouseId` or `managerId and warehouseId";
+
+      if (reqFields.has("controllerId") && !reqFields.has("warehouseId"))
+        return 'Required Field warehouseId';
+
+      if (reqFields.has("managerId") && !reqFields.has("warehouseId"))
+        return 'Required Field warehouseId';
+
+      if (reqFields.has("warehouseId") && !reqFields.has("controllerId") && !reqFields.has("managerId")
+      ) return 'Required Field controllerId or managerId';
+    }
   }
 
   user = {
@@ -54,6 +69,11 @@ class Validate {
   warehouse = {
     assign: async (req, res, next) => {
       const misFields = this.warehouseAssign(req);
+      if (misFields) return next(new ErrorHandler(misFields, 400));
+      next();
+    },
+    remove: async (req, res, next) => {
+      const misFields = this.warehouseRemove(req);
       if (misFields) return next(new ErrorHandler(misFields, 400));
       next();
     }

@@ -19,7 +19,7 @@ transactionModel.belongsTo(orderModel, { foreignKey: {
 // Define one-to-one relationship 
 // - one manager has only one warehouse
 userModel.hasOne(warehouseModel, { foreignKey: 'managerId', as: 'warehouse' });
-warehouseModel.belongsTo(userModel, { foreignKey: 'managerId', as: 'manager' });
+warehouseModel.belongsTo(userModel, { foreignKey: 'managerId', as: 'manager', unique: true });
 
 // Define many-to-many relationship
 // - one controller may have many warehouses and 
