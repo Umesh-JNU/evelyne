@@ -44,6 +44,11 @@ adminRoute.route("/order/:id")
   .get(auth, authAdmin, getOrder)
   .delete(auth, authAdmin, deleteOrder);
 
+adminRoute.post("/order/:id/items", order.item, auth, authAdmin, addOrderItem);
+adminRoute.route("/order/:id/item/:item")
+  .put(auth, order.itemObj, authAdmin, UpdateOrderItem)
+  .delete(auth, authAdmin, deleteOrderItem);
+
 adminRoute.post("/transaction", auth, authRole(['admin', 'manager']), createTransaction);
 adminRoute.get("/transactions", auth, authAdmin, getAllTransaction);
 

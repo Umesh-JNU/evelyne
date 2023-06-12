@@ -27,6 +27,9 @@ const transactionModel = db.define(
         },
       },
     },
+    comment: {
+      type: DataTypes.STRING
+    }
   },
   { timestamps: true }
 );
