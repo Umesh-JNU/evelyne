@@ -5,6 +5,7 @@ const { orderModel, orderItemModel } = require("./order.model");
 const warehouseModel = require("../warehouse/warehouse.model");
 const { userModel } = require("../user/user.model");
 const transactionModel = require("../transaction/transaction.model");
+const { Op } = require("sequelize");
 
 const includeItems = {
 	model: orderItemModel,
@@ -141,6 +142,51 @@ exports.updateOrder = catchAsyncError(async (req, res, next) => {
 
 exports.deleteOrder = catchAsyncError(async (req, res, next) => {
 	const { id } = req.params;
-	await orderModel.destroy({ where: { id } });
-	res.status(204).json({ message: "Order Deleted Successfully." });
+	const isDeleted = await orderModel.destroy({ where: { id } });
+	if (isDeleted === 0) return next(new ErrorHandler("Order not found.", 404));
+
+	res.status(200).json({ message: "Order Deleted Successfully.", isDeleted });
+})
+
+exports.addOrderItem = catchAsyncError(async (req, res, next) => {
+	console.log("add order item", req.body);
+	const { id } = req.params;
+	const { items } = req.body;
+
+	if (!items || items.length === 0) {
+
+	}
+	items.forEach(item => { item.orderId = id; });
+	console.log(items);
+	const added_items = await orderItemModel.bulkCreate(items);
+	res.status(201).json({
+		items: added_items,
+		message: "Items added successfully."
+	})
+})
+
+exports.UpdateOrderItem = catchAsyncError(async (req, res, next) => {
+	console.log("update order item", req.body);
+	const { id, item } = req.params;
+
+	console.log({ id, item });
+	console.log(await orderItemModel.findByPk(item));
+	const [isUpdated] = await orderItemModel.update(req.body, {
+		where: { [Op.and]: { orderId: parseInt(id), id: parseInt(item) } }
+	});
+
+	if (isUpdated === 0) return next(new ErrorHandler("Order Item not found.", 404));
+
+	res.status(200).json({ message: "Order Item updated successfully.", isUpdated });
+})
+
+exports.deleteOrderItem = catchAsyncError(async (req, res, next) => {
+	const { id, item } = req.params;
+	const isDeleted = await orderItemModel.destroy({ where: { [Op.and]: { orderId: id, id: item } } });
+
+	console.log({ isDeleted });
+	if (isDeleted === 0)
+		return next(new ErrorHandler("Order Item not found.", 404));
+
+	res.status(200).json({ message: "Order Item Deleted Successfully.", isDeleted });
 })
