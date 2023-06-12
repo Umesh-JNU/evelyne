@@ -2,7 +2,21 @@ const { DataTypes } = require("sequelize");
 const { db } = require("../../config/database");
 const { orderModel } = require("../order/order.model");
 const { userModel } = require("../user/user.model");
-const warehouseModel = require("../warehouse/warehouse.model");
+
+const commentModel = db.define(
+  "Comments",
+  {
+    comment: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: "Comment can't empty." },
+        notNull: { msg: "Comment can't be null." }
+      }
+    }
+  },
+  { timestamps: true }
+);
 
 const transactionModel = db.define(
   "Transaction",
@@ -27,12 +41,17 @@ const transactionModel = db.define(
         },
       },
     },
-    comment: {
-      type: DataTypes.STRING
-    }
   },
   { timestamps: true }
 );
+
+transactionModel.addScope('defaultScope', {
+  include: [{
+    model: commentModel,
+    as: 'comments',
+    attributes: ["id", "comment"]
+  }]
+});
 
 transactionModel.warehouseTrans = async function (warehouseId) {
   return await transactionModel.findAll({
@@ -95,4 +114,7 @@ transactionModel.getCounts = async function (query) {
 }
 
 
-module.exports = transactionModel;
+transactionModel.hasMany(commentModel, { foreignKey: "transactionId", as: "comments" });
+commentModel.belongsTo(transactionModel, { foreignKey: "transactionId", as: "transaction" });
+
+module.exports = { transactionModel, commentModel };

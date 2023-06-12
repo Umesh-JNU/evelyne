@@ -4,7 +4,7 @@ const getFormattedQuery = require("../../utils/apiFeatures");
 const { orderModel, orderItemModel } = require("./order.model");
 const warehouseModel = require("../warehouse/warehouse.model");
 const { userModel } = require("../user/user.model");
-const transactionModel = require("../transaction/transaction.model");
+const { transactionModel } = require("../transaction/transaction.model");
 const { Op } = require("sequelize");
 
 const includeItems = {

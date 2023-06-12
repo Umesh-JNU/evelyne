@@ -1,7 +1,7 @@
 const ErrorHandler = require("../../utils/errorHandler")
 const catchAsyncError = require("../../utils/catchAsyncError")
 const getFormattedQuery = require("../../utils/apiFeatures");
-const transactionModel = require("./transaction.model");
+const { transactionModel, commentModel } = require("./transaction.model");
 const { orderModel } = require("../order");
 const { userModel } = require("../user");
 const { warehouseModel } = require("../warehouse");
@@ -33,12 +33,18 @@ const includeOptions = {
 
 exports.createTransaction = catchAsyncError(async (req, res, next) => {
 	console.log("create transaction", req.body);
-	const { orderId } = req.body;
+	const { orderId, comments } = req.body;
 
 	const order = await orderModel.findByPk(orderId);
 	if (!order) return next(new ErrorHandler("Order not found.", 404));
 
 	let transaction = await transactionModel.create(req.body);
+
+	if (comments && comments.length > 0) {
+		comments.forEach((comment) => { comment.transactionId = transaction.id; });
+		await commentModel.bulkCreate(comments);
+	}
+
 	transaction = await transactionModel.findByPk(transaction.id, {
 		...includeOptions
 	});
@@ -60,10 +66,10 @@ exports.getAllTransaction = catchAsyncError(async (req, res, next) => {
 
 	console.log(options.include[0])
 	console.log(JSON.stringify(query));
-	const { rows, count } = await transactionModel.findAndCountAll({
+	const transactions = await transactionModel.findAll({
 		...query, ...options, order: [['createdAt', 'DESC']]
 	});
-	res.status(200).json({ transactions: rows, transactionCount: count });
+	res.status(200).json({ transactions, transactionCount: transactions.length });
 })
 
 exports.getTransaction = catchAsyncError(async (req, res, next) => {
@@ -98,6 +104,15 @@ exports.updateTransaction = catchAsyncError(async (req, res, next) => {
 
 	res.status(200).json({ message: "Transaction updated successfully.", transaction });
 })
+
+exports.addComment = catchAsyncError(async (req, res, next) => {
+	const { id } = req.params;
+	const { comment } = req.body;
+
+	const comment_ = await commentModel.create({ comment, transactionId: id });
+	res.status(201).json({ comment: comment_, message: "Comment Added Successfully." });
+});
+
 
 exports.deleteTransaction = catchAsyncError(async (req, res, next) => {
 	const { id } = req.params;

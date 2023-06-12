@@ -4,7 +4,7 @@ const getFormattedQuery = require("../../utils/apiFeatures");
 const warehouseModel = require("./warehouse.model");
 const { userModel, roleModel } = require("../user/user.model");
 const { orderModel, orderItemModel } = require("../order/order.model");
-const transactionModel = require("../transaction/transaction.model");
+const { transactionModel } = require("../transaction/transaction.model");
 const { Op } = require("sequelize");
 const { db } = require("../../config/database");
 
@@ -249,7 +249,6 @@ exports.assignHandler = catchAsyncError(async (req, res, next) => {
 
 	if (controllerId) {
 		const controller = await userModel.getHandler(controllerId, next);
-		if (!controller) return next(new ErrorHandler("Controller not found.", 404));
 
 		console.log({ controller });
 		if (controller.userRole.role !== "controller") return next(new ErrorHandler("Invalid Controller.", 400));
@@ -260,7 +259,6 @@ exports.assignHandler = catchAsyncError(async (req, res, next) => {
 	else if (managerId) {
 		console.log(req.body);
 		const manager = await userModel.getHandler(managerId, next);
-		if (!manager) return next(new ErrorHandler("Manager not found.", 404));
 
 		if (manager.userRole.role !== "manager") return next(new ErrorHandler("Invalid Manager.", 400));
 

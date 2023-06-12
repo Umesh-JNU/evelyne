@@ -13,12 +13,14 @@ class Validate {
 
     this.orderAttr = {
       create: ["address", "items", "warehouse", "user"],
+      update: ["tin_no", "address", "transit_company", "consignee", "custom_agent", "DDCOM_no", "quantity_decl", "physical_quant", "arrival_date", "last_storage_date", "truck_no", "container_no", "transporter", "ref_no", "desc_product", "unit", "comment", "name_counter", "counter_valid", "customs", "client_valid"]
+
     }
 
     this.missingFields = (fields, req) => {
       const reqFields = new Set(Object.keys(req.body));
       const misFields = fields.filter(k => !reqFields.has(k));
-      return misFields.length > 0 && `Required Fields ${misFields.join(', ')}`;
+      return misFields.length > 0 && `Required Fields ${misFields.join(', ')}.`;
     }
 
     this.warehouseAssign = (req) => {
@@ -90,9 +92,20 @@ class Validate {
         return next(new ErrorHandler(misFields, 400));
       next();
     },
-    // put: async (req, res, next) => {
-    //   const misFields = this.missingFields(this.orderAttr.update, req);
-    // }
+    put: async (req, res, next) => {
+      req.body = Object.fromEntries(
+        Object.entries(req.body).filter(([key, value]) =>
+          this.orderAttr.update.includes(key)
+        )
+      );
+
+      console.log({bodt: req.body});
+      if (!req.body || Object.keys(req.body).length === 0) {
+        return next(new ErrorHandler(`Please provide at least one of the fields - ${this.orderAttr.update.join(', ')}.`, 400));
+      }
+
+      next();
+    },
     updateStatus: async (req, res, next) => {
       if (!req.body.status) {
         return next(new ErrorHandler("Please provide the status", 400));
@@ -111,23 +124,24 @@ class Validate {
       next();
     },
     item: async (req, res, next) => {
-      const {items} = req.body;
-      if(!items) {
+      const { items } = req.body;
+      if (!items) {
         return next(new ErrorHandler("Please provide items.", 400));
       }
 
-      if(!items.length || items.length === 0) {
+      if (!items.length || items.length === 0) {
         return next(new ErrorHandler("Please add atleast one item.", 400));
       }
-      
+
       next();
     },
     itemObj: async (req, res, next) => {
-      const {quantity, name} = req.body;
-      if(!quantity && !name) {
+      const { quantity, name } = req.body;
+      if (!quantity && !name) {
         return next(new ErrorHandler("Missing fields - quantity and name", 400));
       }
-      next();    }
+      next();
+    }
   }
 }
 

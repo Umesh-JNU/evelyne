@@ -10,7 +10,7 @@ const { createWarehouse, updateWarehouse, deleteWarehouse, myWarehouse, housesAn
 
 const { createOrder, getAllOrder, getOrder, updateOrder, deleteOrder, UpdateOrderItem, addOrderItem, deleteOrderItem } = require('../order');
 
-const { createTransaction, getAllTransaction, getTransaction, updateTransaction, deleteTransaction } = require("../transaction");
+const { createTransaction, getAllTransaction, getTransaction, updateTransaction, deleteTransaction, addComment } = require("../transaction");
 
 // --------------------------------------------------------------------------------------------------------------
 const adminRoute = express.Router();
@@ -51,7 +51,7 @@ adminRoute.route("/order/:id/item/:item")
 
 adminRoute.post("/transaction", auth, authRole(['admin', 'manager']), createTransaction);
 adminRoute.get("/transactions", auth, authAdmin, getAllTransaction);
-
+adminRoute.post("/transaction/:id/add-comment", auth, authAdmin, addComment);
 adminRoute.route("/transaction/:id")
   .put(auth, authRole(['admin', 'manager']), updateTransaction)
   .get(auth, authAdmin, getTransaction)
@@ -78,7 +78,7 @@ managerRoute.post("/order", order.post, auth, authManager, createOrder);
 managerRoute.get("/warehouse/orders", auth, authManager, getWarehouseOrder);
 managerRoute.route("/order/:id")
   .get(auth, authManager, getOrder)
-  .put(auth, authManager, updateOrder);
+  .put(order.put, auth, authManager, updateOrder);
 managerRoute.post("/order/:id/items", order.item, auth, authManager, addOrderItem);
 managerRoute.route("/order/:id/item/:item")
   .put(auth, order.itemObj, authManager, UpdateOrderItem)
@@ -87,6 +87,7 @@ managerRoute.put("/order/:id/update-status", order.updateStatus, auth, authManag
 managerRoute.put("/order/:id/approve", order.approve, auth, authManager, updateOrder);
 managerRoute.get("/warehouse/transactions", auth, authManager, getWarehouseTransaction);
 managerRoute.get("/transaction/:id", auth, authManager, getTransaction);
+managerRoute.post("/transaction/:id/add-comment", auth, authManager, addComment);
 managerRoute.get("/my-warehouse", auth, authManager, myWarehouse);
 
 module.exports = { adminRoute, controllerRoute, managerRoute };

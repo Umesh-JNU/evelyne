@@ -86,28 +86,29 @@ const orderModel = db.define("Order", {
     type: DataTypes.STRING
   },
   counter_valid: {
-    type: DataTypes.BOOLEAN
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
   },
-  name_manager: {
-    type: DataTypes.STRING
-  },
+  // name_manager: {
+  //   type: DataTypes.STRING
+  // },
   manager_valid: {
-    type: DataTypes.BOOLEAN
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
   },
   customs: {
     type: DataTypes.STRING
   },
   // Client name,
   client_valid: {
-    type: DataTypes.BOOLEAN
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
   },
   status: {
     type: DataTypes.ENUM("arrived", "out-bound", "in-bound"),
     defaultValue: "in-bound",
   },
-},
-  { timestamps: true }
-);
+}, { timestamps: true });
 
 orderModel.warehouseOrders = async function (warehouseId) {
   return await orderModel.findAll({
