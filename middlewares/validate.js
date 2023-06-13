@@ -54,12 +54,6 @@ class Validate {
 
       if (reqFields.has("controllerId") && !reqFields.has("warehouseId"))
         return 'Required Field warehouseId';
-
-      if (reqFields.has("managerId") && !reqFields.has("warehouseId"))
-        return 'Required Field warehouseId';
-
-      if (reqFields.has("warehouseId") && !reqFields.has("controllerId") && !reqFields.has("managerId")
-      ) return 'Required Field controllerId or managerId';
     }
   }
 

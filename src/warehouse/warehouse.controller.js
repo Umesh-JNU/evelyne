@@ -303,10 +303,7 @@ exports.removeHandler = catchAsyncError(async (req, res, next) => {
 
 		if (manager.userRole.role !== "manager") return next(new ErrorHandler("Invalid Manager.", 400));
 
-		const warehouse_ = await warehouseModel.findByPk(warehouseId);
-		if (!warehouse_) return next(new ErrorHandler("Warehouse not found.", 404));
-
-		await warehouse_.setManager(null);
+		isRemoved = await manager.setWarehouse(null);
 		res.status(200).json({ isRemoved, message: "Manager removed succesfully." });
 	}
 	else return next(new ErrorHandler("Something went wrong", 500));
