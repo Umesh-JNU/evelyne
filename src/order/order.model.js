@@ -106,33 +106,40 @@ const orderModel = db.define("Order", {
   },
   status: {
     type: DataTypes.ENUM("arrived", "out-bound", "in-bound"),
-    defaultValue: "in-bound",
+    defaultValue: "arrived",
   },
 }, { timestamps: true });
 
-orderModel.warehouseOrders = async function (warehouseId) {
+const includeCountAttr = [
+  [
+    // Note the wrapping parentheses in the call below!
+    db.literal(`(
+        SELECT COUNT(*)
+        FROM OrderItems AS item
+        WHERE	item.orderId = Order.id
+    )`),
+    'itemCount'
+  ],
+  [
+    db.literal(`(
+        SELECT SUM(quantity)
+        FROM OrderItems AS item
+        WHERE	item.orderId = Order.id
+    )`),
+    'totalWeight'
+  ]
+];
+
+orderModel.warehouseOrders = async function (warehouseId, status) {
+  let whereQuery = { warehouseId };
+  if (status) {
+    whereQuery = { warehouseId, status };
+  };
+
   return await orderModel.findAll({
-    where: { warehouseId },
+    where: whereQuery,
     attributes: {
-      include: [
-        [
-          // Note the wrapping parentheses in the call below!
-          db.literal(`(
-              SELECT COUNT(*)
-              FROM OrderItems AS item
-              WHERE	item.orderId = Order.id
-          )`),
-          'itemCount'
-        ],
-        [
-          db.literal(`(
-              SELECT SUM(quantity)
-              FROM OrderItems AS item
-              WHERE	item.orderId = Order.id
-          )`),
-          'totalWeight'
-        ]
-      ],
+      include: includeCountAttr,
       exclude: [...Object.keys(orderModel.rawAttributes).filter(attr => !["id", "status", "createdAt"].includes(attr)), "userId", "warehouseId"]
     },
   })
@@ -169,8 +176,21 @@ orderModel.getCounts = async function (query) {
 
   return { counts, total };
 }
+orderModel.prototype.nextStatus = async function () {
+  const currentStatus = this.status;
+  switch (currentStatus) {
+    case "arrived":
+      return "in-bound";
+    case "in-bound":
+      return "out-bound";
+    case "out-bound":
+      return "exit";
+    default:
+      return currentStatus;
+  }
+};
 
 orderModel.hasMany(orderItemModel, { foreignKey: "orderId", as: "items" });
 orderItemModel.belongsTo(orderModel, { foreignKey: "orderId", as: "order" });
 
-module.exports = { orderModel, orderItemModel };
+module.exports = { orderModel, orderItemModel, includeCountAttr };

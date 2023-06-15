@@ -5,6 +5,10 @@ const { invoiceRoute, invoiceModel, invoiceController } = require("./invoice");
 const { orderRoute, orderModel, orderController } = require("./order");
 const { adminRoute, controllerRoute, managerRoute } = require("./admin");
 const { contentRoute } = require("./staticDetails");
+const {notificationModel} = require("./notifications");
+
+userModel.hasMany(notificationModel, { foreignKey: "userId", as: "notifications" });
+notificationModel.belongsTo(userModel, { foreignKey: "userId", as: "user" });
 
 userModel.hasMany(orderModel, { foreignKey: "userId", as: "orders" });
 orderModel.belongsTo(userModel, { foreignKey: "userId", as: "user" });

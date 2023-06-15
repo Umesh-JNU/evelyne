@@ -1,11 +1,12 @@
 const ErrorHandler = require("../../utils/errorHandler")
 const catchAsyncError = require("../../utils/catchAsyncError")
 const getFormattedQuery = require("../../utils/apiFeatures");
-const { orderModel, orderItemModel } = require("./order.model");
+const { orderModel, orderItemModel, includeCountAttr } = require("./order.model");
 const warehouseModel = require("../warehouse/warehouse.model");
 const { userModel } = require("../user/user.model");
 const { transactionModel } = require("../transaction/transaction.model");
 const { Op } = require("sequelize");
+const { notificationModel } = require("../notifications");
 
 const includeItems = {
 	model: orderItemModel,
@@ -15,7 +16,7 @@ const includeItems = {
 const includeWarehouse = {
 	model: warehouseModel,
 	as: "warehouse",
-	attributes: ["id", "name"],
+	attributes: ["id", "name", "image"],
 };
 const includeUser = {
 	model: userModel,
@@ -29,10 +30,10 @@ const includeTransaction = {
 	attributes: { exclude: ["orderId"] }
 };
 
-const includeOptions = (isIncludeUser = false) => {
-	if (isIncludeUser) return [includeItems, includeWarehouse, includeUser];
+const includeOptions = (isIncludeTrans = true) => {
+	if (isIncludeTrans) return [includeItems, includeWarehouse, includeUser, includeTransaction];
 
-	return [includeItems, includeUser, includeWarehouse, includeTransaction];
+	return [includeItems, includeUser, includeWarehouse];
 }
 
 exports.createOrder = catchAsyncError(async (req, res, next) => {
@@ -57,7 +58,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 	await user_.addOrder(order);
 
 	order = await orderModel.findByPk(order.id, {
-		include: includeOptions(true),
+		include: includeOptions(false),
 		attributes: {
 			exclude: ["warehouseId", "userId"]
 		}
@@ -69,67 +70,75 @@ exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 	console.log(req.query);
 	const query = getFormattedQuery("id", req.query);
 
-	const user = req.user;
-	let options = includeOptions(true);
-	console.log({ user });
-	if (!user || user?.userRole?.role === 'user') {
-		console.log(!user)
-		query.where = {
-			...query.where,
-			userId: req.userId
-		}
-		options = includeOptions();
-	};
+	const userId = req.userId;
+	const user = await userModel.getHandler(userId, next);
 
-	console.log(JSON.stringify(query));
+	switch (user.userRole.role) {
+		case "admin":
+			var { counts, total: orderCount } = await orderModel.getCounts(query.where);
+			var orders = await orderModel.findAll({
+				where: { ...query.where },
+				include: includeOptions(false),
+				attributes: { exclude: ["warehouseId", "userId"] },
+				order: [['createdAt', 'DESC']]
+			});
+			return res.status(200).json({ orders, counts, orderCount });
 
-	const { counts, total: orderCount } = await orderModel.getCounts(query.where);
+		case "user":
+			console.log("in user");
+			var { counts } = await orderModel.getCounts({ userId });
+			var orders = await orderModel.findAll({
+				where: { userId, ...query.where },
+				include: includeOptions(false),
+				attributes: { exclude: ["warehouseId", "userId"] },
+				order: [['createdAt', 'DESC']]
+			});
+			console.log({ counts, orders });
+			return res.status(200).json({ orders, counts });
 
-	console.log({ options })
-	const orders = await orderModel.findAll({
-		...query,
-		include: options,
-		attributes: {
-			exclude: ["warehouseId", "userId"]
-		},
-		order: [['createdAt', 'DESC']]
-	});
+		case "manager":
+			const wId = (await user.getWarehouse()).id;
+			var { counts } = await orderModel.getCounts({ warehouseId: wId });
+			return res.status(200).json({ ...counts });
 
-	res.status(200).json({ orders, orderCount, counts });
+		// case "controller":		
+		default:
+			return next(new ErrorHandler("Bad Request", 400));
+	}
 })
 
 exports.getOrder = catchAsyncError(async (req, res, next) => {
 	console.log("get Order");
 	const { id } = req.params;
+	const userId = req.userId;
+	const user = await userModel.getHandler(userId);
 
-	const user = req.user;
-	let query = { where: { id } };
-	let options = includeOptions(true);
-	if (!user || user?.userRole?.role === 'user') {
-		query.where = {
-			...query.where,
-			userId: req.userId
-		}
+	let options = includeOptions(false);
+	if (user.userRole.role === 'user') {
 		options = includeOptions();
-	};
+		var order = await orderModel.findOne({
+			where: { id, userId },
+			include: includeOptions(),
+			attributes: { exclude: ["userId", "warehouseId"] }
+		});
+	}
+	else {
+		var order = await orderModel.findByPk(id, {
+			include: includeOptions(false),
+			attributes: {
+				include: includeCountAttr,
+				exclude: ["userId", "warehouseId"]
+			}
+		});
+	}
 
-	console.log({ options });
-	const order = await orderModel.findOne({
-		...query,
-		include: options,
-		attributes: {
-			exclude: ["warehouseId", "userId"]
-		}
-	});
-	if (!order) return next(new ErrorHandler("Order not found", 404));
-
-	console.log({ order })
 	res.status(200).json({ order });
 })
 
 exports.updateOrder = catchAsyncError(async (req, res, next) => {
 	console.log("update Order", req.body);
 	const { id } = req.params;
+
 
 	const [isUpdated] = await orderModel.update(req.body, {
 		where: { id },
@@ -147,6 +156,73 @@ exports.deleteOrder = catchAsyncError(async (req, res, next) => {
 
 	res.status(200).json({ message: "Order Deleted Successfully.", isDeleted });
 })
+
+exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
+	console.log("change status", req.body);
+	const { id } = req.params;
+	const userId = req.userId;
+	const { status, manager_valid } = req.body;
+
+	const order = await orderModel.findByPk(id);
+	if (!order) return next(new ErrorHandler("Order not found.", 404));
+
+	const newStatus = await order.nextStatus();
+
+	const statusRank = {
+		"arrived": 0,
+		"in-bound": 1,
+		"out-bound": 2,
+	};
+
+	console.log({ status, newStatus, r1: statusRank[status], r2: statusRank[newStatus] });
+	if (status && statusRank[status] >= statusRank[newStatus]) {
+		return next(new ErrorHandler(`Status can't be updated from ${status} to ${newStatus}`, 400));
+	}
+
+	const texts = {
+		"arrived": `Order number ${id} Status updated from Arrived to In-bound`,
+		"in-bound": `Order number ${id} Status updated from In-bound to Out-bound`,
+		"out-bound": `Your order number ${id} is ready to dispatch. Soon this order will be dispatched.`
+	}
+
+	const userNotiText = texts[order.status];
+	if (manager_valid) {
+		console.log({ status, newStatus, 0: statusRank[status], 1: statusRank[newStatus] })
+
+		await notificationModel.create({
+			text: userNotiText,
+			userId: order.userId
+		});
+
+		const managerNotiText = newStatus === 'exit' ? `You have approved the order ${id} for exits.` : texts[order.status];
+
+		await notificationModel.create({
+			text: managerNotiText,
+			userId
+		});
+	}
+
+	if (newStatus === "exit") order.manager_valid = true;
+	else order.status = newStatus;
+
+	await order.save();
+
+	res.status(200).json({ message: userNotiText });
+});
+
+exports.clientValidation = catchAsyncError(async (req, res, next) => {
+	const { id } = req.params;
+	const userId = req.userId;
+
+	const order = await orderModel.findOne({ where: { userId, id } });
+	if (!order) return next(new ErrorHandler("Order not found."));
+
+	console.log({ order })
+	order.client_valid = true;
+	await order.save();
+
+	res.status(200).json({ message: `You have approve order ${id} for exit from warehouse.` });
+});
 
 exports.addOrderItem = catchAsyncError(async (req, res, next) => {
 	console.log("add order item", req.body);
@@ -190,3 +266,10 @@ exports.deleteOrderItem = catchAsyncError(async (req, res, next) => {
 
 	res.status(200).json({ message: "Order Item Deleted Successfully.", isDeleted });
 })
+
+exports.goodsNotices = catchAsyncError(async (req, res, next) => {
+	// const manager = 
+	const { counts } = await order
+})
+
+

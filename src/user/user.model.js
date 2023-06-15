@@ -156,7 +156,7 @@ userModel.getHandler = async function (userId, next) {
 		}],
 	});
 
-	if (!handler) return next(new ErrorHandler("Manager/Controller not found.", 404));
+	if (!handler) return next(new ErrorHandler("User with specified role not found.", 404));
 
 	return handler;
 };

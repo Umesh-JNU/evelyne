@@ -8,7 +8,7 @@ const { createContent, updateContent, deleteContent } = require("../staticDetail
 
 const { createWarehouse, updateWarehouse, deleteWarehouse, myWarehouse, housesAndOrderCount, warehouseAndAllOrders, getWarehouseOrder, housesAndTransactionCount, getWarehouseTransaction, assignHandler, removeHandler } = require("../warehouse");
 
-const { createOrder, getAllOrder, getOrder, updateOrder, deleteOrder, UpdateOrderItem, addOrderItem, deleteOrderItem } = require('../order');
+const { createOrder, getAllOrder, getOrder, updateOrder, updateOrderStatus, deleteOrder, UpdateOrderItem, addOrderItem, deleteOrderItem } = require('../order');
 
 const { createTransaction, getAllTransaction, getTransaction, updateTransaction, deleteTransaction, addComment } = require("../transaction");
 
@@ -74,6 +74,7 @@ controllerRoute.get("/transaction/:id", auth, authController, getTransaction);
 const managerRoute = express.Router();
 const authManager = authRole(["manager"]);
 
+managerRoute.get("/warehouse/goods-notices", auth, authManager, getAllOrder);
 managerRoute.post("/order", order.post, auth, authManager, createOrder);
 managerRoute.get("/warehouse/orders", auth, authManager, getWarehouseOrder);
 managerRoute.route("/order/:id")
@@ -83,8 +84,8 @@ managerRoute.post("/order/:id/items", order.item, auth, authManager, addOrderIte
 managerRoute.route("/order/:id/item/:item")
   .put(auth, order.itemObj, authManager, UpdateOrderItem)
   .delete(auth, authManager, deleteOrderItem);
-managerRoute.put("/order/:id/update-status", order.updateStatus, auth, authManager, updateOrder);
-managerRoute.put("/order/:id/approve", order.approve, auth, authManager, updateOrder);
+managerRoute.put("/order/:id/update-status", order.updateStatus, auth, authManager, updateOrderStatus);
+managerRoute.put("/order/:id/approve", order.approve, auth, authManager, updateOrderStatus);
 managerRoute.get("/warehouse/transactions", auth, authManager, getWarehouseTransaction);
 managerRoute.get("/transaction/:id", auth, authManager, getTransaction);
 managerRoute.post("/transaction/:id/add-comment", auth, authManager, addComment);

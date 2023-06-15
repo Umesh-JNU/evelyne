@@ -26,6 +26,7 @@ app.get("/", (req, res, next) => res.json({ message: "Server is running" }));
 
 const { userRoute, warehouseRoute, transactionRoute, invoiceRoute, orderRoute, adminRoute, controllerRoute, managerRoute, contentRoute } = require("./src");
 const reportRoute = require("./src/report/report.route");
+const { notificationRoute } = require("./src/notifications");
 app.use("/api/user", userRoute);
 app.use("/api/warehouse", warehouseRoute);
 app.use("/api/transaction", transactionRoute);
@@ -35,7 +36,9 @@ app.use("/api/admin", adminRoute);
 app.use("/api/controller", controllerRoute);
 app.use("/api/manager", managerRoute);
 app.use("/api/content", contentRoute);
+app.use("/api/notification", notificationRoute);
 app.use("/api/report", reportRoute);
+
 app.all("*", async (req, res) => {
   res
     .status(404)

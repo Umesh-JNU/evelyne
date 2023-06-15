@@ -154,8 +154,8 @@ exports.getWarehouseOrder = catchAsyncError(async (req, res, next) => {
 			const wId = (await handler.getWarehouse())?.id;
 			if (!wId) return next(new ErrorHandler("Warehouse not assigned.", 400));
 
-			orders = await orderModel.warehouseOrders(wId);
-
+			orders = await orderModel.warehouseOrders(wId, req.query.status);
+			
 			return res.status(200).json({ orders, image: "https://cdn0.iconfinder.com/data/icons/containers/512/palet03.png" });
 
 		default:
