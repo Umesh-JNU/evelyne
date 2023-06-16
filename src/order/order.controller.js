@@ -192,6 +192,7 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 
 		// other we update the status
 		order.status = newStatus;
+		var managerNotiText = texts[currentStatus];
 	}
 
 	// CASE - when manager is approving 
