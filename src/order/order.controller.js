@@ -191,7 +191,7 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 			return next(new ErrorHandler(`Status can't be updated from ${currentStatus} to ${status}`, 400));
 
 		// other we update the status
-		currentStatus
+		order.status = newStatus;
 	}
 
 	// CASE - when manager is approving 
