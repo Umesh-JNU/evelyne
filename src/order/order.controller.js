@@ -163,51 +163,81 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 	const userId = req.userId;
 	const { status, manager_valid } = req.body;
 
-	const order = await orderModel.findByPk(id);
-	if (!order) return next(new ErrorHandler("Order not found.", 404));
-
-	const newStatus = await order.nextStatus();
-
-	const statusRank = {
-		"arrived": 0,
-		"in-bound": 1,
-		"out-bound": 2,
-	};
-
-	console.log({ status, newStatus, r1: statusRank[status], r2: statusRank[newStatus] });
-	if (status && statusRank[status] >= statusRank[newStatus]) {
-		return next(new ErrorHandler(`Status can't be updated from ${status} to ${newStatus}`, 400));
-	}
-
 	const texts = {
 		"arrived": `Order number ${id} Status updated from Arrived to In-bound`,
 		"in-bound": `Order number ${id} Status updated from In-bound to Out-bound`,
 		"out-bound": `Your order number ${id} is ready to dispatch. Soon this order will be dispatched.`
+	};
+
+	const order = await orderModel.findByPk(id);
+	if (!order) return next(new ErrorHandler("Order not found.", 404));
+
+	const currentStatus = order.status;
+	const newStatus = await order.nextStatus();
+
+	console.log({ manager_valid, status, newStatus, currentStatus })
+	if (!newStatus) {
+		return next(new ErrorHandler("Bad Request", 400));
+	}
+	// CASE - when only order status is to be updated
+	if (status) {
+		/**
+		 * currentStatus - current status of the order
+		 * status - new order status from frontend
+		 * newStatus - new order status evaluated 
+		 * if both status and new status is not equal then there will be no status update
+		 */
+		if (status !== newStatus)
+			return next(new ErrorHandler(`Status can't be updated from ${currentStatus} to ${status}`, 400));
+
+		// other we update the status
+		currentStatus
 	}
 
-	const userNotiText = texts[order.status];
+	// CASE - when manager is approving 
 	if (manager_valid) {
-		console.log({ status, newStatus, 0: statusRank[status], 1: statusRank[newStatus] })
+		const userNotiText = texts[currentStatus];
+		var managerNotiText = newStatus === 'exit' ? `You have approved the order ${id} for exit.` : texts[currentStatus];
 
+		/**
+		 * We check the new status
+		 * if it is `exit` that means now manager has done all approval except for the last (for exit).
+		 * to approve this client_valid field must be true.
+		 */
+		if (newStatus === "exit") {
+			// either already approved
+			if (order.manager_valid)
+				return next(new ErrorHandler("Already approved.", 400));
+
+			// not approved then check client has approved or not
+			if (!order.client_valid)
+				return next(new ErrorHandler("Can't be approved as client hasn't approved.", 400));
+
+			// otherwise we update the manager_valid field to true and also create notifications.
+			order.manager_valid = true;
+		}
+		// if it is not exit we update the status
+		else {
+			order.status = newStatus;
+		}
+
+		// for user
 		await notificationModel.create({
 			text: userNotiText,
 			userId: order.userId
 		});
 
-		const managerNotiText = newStatus === 'exit' ? `You have approved the order ${id} for exits.` : texts[order.status];
-
+		// for manager
 		await notificationModel.create({
 			text: managerNotiText,
 			userId
 		});
 	}
 
-	if (newStatus === "exit") order.manager_valid = true;
-	else order.status = newStatus;
-
+	// after everystep is okay we save the order.
 	await order.save();
 
-	res.status(200).json({ message: userNotiText });
+	res.status(200).json({ message: managerNotiText });
 });
 
 exports.clientValidation = catchAsyncError(async (req, res, next) => {
@@ -267,9 +297,5 @@ exports.deleteOrderItem = catchAsyncError(async (req, res, next) => {
 	res.status(200).json({ message: "Order Item Deleted Successfully.", isDeleted });
 })
 
-exports.goodsNotices = catchAsyncError(async (req, res, next) => {
-	// const manager = 
-	const { counts } = await order
-})
 
 

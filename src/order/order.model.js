@@ -186,7 +186,7 @@ orderModel.prototype.nextStatus = async function () {
     case "out-bound":
       return "exit";
     default:
-      return currentStatus;
+      return;
   }
 };
 

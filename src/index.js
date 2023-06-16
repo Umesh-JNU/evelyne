@@ -10,6 +10,9 @@ const {notificationModel} = require("./notifications");
 userModel.hasMany(notificationModel, { foreignKey: "userId", as: "notifications" });
 notificationModel.belongsTo(userModel, { foreignKey: "userId", as: "user" });
 
+orderModel.hasMany(notificationModel, { foreignKey: "orderId", as: "notifications" });
+notificationModel.belongsTo(orderModel, { foreignKey: "orderId", as: "order" });
+
 userModel.hasMany(orderModel, { foreignKey: "userId", as: "orders" });
 orderModel.belongsTo(userModel, { foreignKey: "userId", as: "user" });
 
