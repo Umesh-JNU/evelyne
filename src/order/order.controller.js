@@ -211,6 +211,7 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 				return next(new ErrorHandler("Already approved.", 400));
 
 			// not approved then check client has approved or not
+			console.log(order.dataValues, order.client_valid, "client valid")
 			if (!order.client_valid)
 				return next(new ErrorHandler("Can't be approved as client hasn't approved.", 400));
 
@@ -225,13 +226,15 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 		// for user
 		await notificationModel.create({
 			text: userNotiText,
-			userId: order.userId
+			userId: order.userId,
+			orderId: order.id
 		});
 
 		// for manager
 		await notificationModel.create({
 			text: managerNotiText,
-			userId
+			userId,
+			orderId: order.id
 		});
 	}
 
