@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    h2 {
+      font-size: 2rem;
+    }
+
+    .details {
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 40%;
+      border-collapse: collapse;
+    }
+
+    td, p {
+      padding: 8px;
+      font-size: 1.5rem;
+    }
+
+    td:first-child {
+      font-weight: bold;
+    }
+
+    .comments ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    .comments li {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <table>
+      <tbody>
+        <tr>
+          <td>Transaction Id:</td>
+          <td>{{id}}</td>
+        </tr>
+        <tr>
+          <td>Amount:</td>
+          <td>{{amount}}</td>
+        </tr>
+        <tr>
+          <td>Client:</td>
+          <td>{{order.user.fullname}}</td>
+        </tr>
+        <tr>
+          <td>Status:</td>
+          <td>{{status}}</td>
+        </tr>
+        <tr>
+          <td>Mode:</td>
+          <td>{{mode}}</td>
+        </tr>
+        <tr>
+          <td>Date:</td>
+          <td>{{formattedDate createdAt}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="details">
+      <h2>Order Information</h2>
+      <table>
+        <tbody>
+          <tr>
+            <td>Order Id:</td>
+            <td>{{order.id}}</td>
+          </tr>
+          <tr>
+            <td>Status:</td>
+            <td>{{order.status}}</td>
+          </tr>
+          <tr>
+            <td>Warehouse:</td>
+            <td>{{order.warehouse.name}}</td>
+          </tr>
+          <tr>
+            <td>Manager:</td>
+            <td>{{order.warehouse.manager.fullname}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="details comments">
+      <h2>Comments</h2>
+      <ul>
+        {{#each comments}}
+        <li>
+          <p>{{ comment }}</p>
+        </li>
+        {{/each}}
+      </ul>
+    </div>
+  </div>
+</body>
+
+</html>

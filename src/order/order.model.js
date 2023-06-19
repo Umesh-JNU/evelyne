@@ -55,6 +55,12 @@ const orderModel = db.define("Order", {
     type: DataTypes.STRING
   },
   arrival_date: {
+    type: DataTypes.DATE,
+  },
+  trans_date: {
+    type: DataTypes.DATE
+  },
+  exit_date: {
     type: DataTypes.DATE
   },
   last_storage_date: {

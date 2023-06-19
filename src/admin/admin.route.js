@@ -68,7 +68,7 @@ controllerRoute.get("/all-warehouse/orders", auth, authController, warehouseAndA
 controllerRoute.get("/warehouse/transactions/count", auth, authController, housesAndTransactionCount);
 controllerRoute.get("/warehouse/transactions", auth, authController, getWarehouseTransaction);
 controllerRoute.get("/transaction/:id", auth, authController, getTransaction);
-// controllerRoute.get("/my-warehouse", auth, authController, myWarehouse);
+controllerRoute.get("/my-warehouses", auth, authController, myWarehouse);
 
 // --------------------------------------------------------------------------------------------------------------
 const managerRoute = express.Router();

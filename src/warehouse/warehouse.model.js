@@ -43,6 +43,18 @@ const warehouseModel = db.define(
         notEmpty: { msg: "Image for warehouse is required." },
         notNull: { msg: "Image for warehouse is required." },
       },
+    },
+    value: {
+      type: DataTypes.NUMBER,
+      defaultValue: 100,
+    },
+    credit_amt: {
+      type: DataTypes.NUMBER,
+      defaultValue: 0,
+    },
+    debit_amt: {
+      type: DataTypes.NUMBER,
+      defaultValue: 0,
     }
   },
   { timestamps: true }

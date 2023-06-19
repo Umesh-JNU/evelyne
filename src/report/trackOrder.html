@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    h2 {
+      font-size: 2rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header img {
+      width: 100px;
+      height: 100px;
+    }
+
+    .details {
+      margin-bottom: 20px;
+    }
+
+    .details img {
+      width: 50px;
+      height: 50px;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td,
+    span {
+      padding: 8px;
+      font-size: 1.5rem;
+    }
+
+    p {
+      font-size: 1.5rem;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    .table-border th,
+    .table-border td {
+      border: 1px solid black;
+    }
+
+    .table td:nth-child(odd) {
+      font-weight: bold;
+    }
+
+    .table td:first-child {
+      width: 20%;
+    }
+
+    .table td:nth-child(3) {
+      text-align: right;
+      padding-right: 2%;
+    }
+
+    .comments {
+      margin-top: 20px;
+    }
+
+    .comments ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    .comments li {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="details">
+      <h2>Order #{{id}} Details</h2>
+      <table class="table">
+        <tbody>
+          <tr>
+            <td>Tin No.:</td>
+            <td>{{tin_no}}</td>
+
+            <td>Address:</td>
+            <td>{{address}}</td>
+          </tr>
+          <tr>
+            <td>Transit Company:</td>
+            <td>{{transit_company}}</td>
+
+            <td>Consignee:</td>
+            <td>{{consignee}}</td>
+          </tr>
+          <tr>
+            <td>Custom Agent:</td>
+            <td>{{custom_agent}}</td>
+
+            <td>DDCOM No.:</td>
+            <td>{{DDCOM_no}}</td>
+          </tr>
+          <tr>
+            <td>Quantity Declaration:</td>
+            <td>{{quantity_decl}}</td>
+
+            <td>Physical Quantity:</td>
+            <td>{{physical_quant}}</td>
+          </tr>
+          <tr>
+            <td>Arrival Date:</td>
+            <td>{{formattedDate arrival_date}}</td>
+
+            <td>Transhipment Date:</td>
+            <td>{{formattedDate trans_date}}</td>
+          </tr>
+          <tr>
+            <td>Exit Date:</td>
+            <td>{{formattedDate exit_date}}</td>
+
+            <td>Last Storage Date:</td>
+            <td>{{formattedDate last_storage_date}}</td>
+          </tr>
+          <tr>
+            <td>Truck No.:</td>
+            <td>{{truck_no}}</td>
+
+            <td>Transporter:</td>
+            <td>{{transporter}}</td>
+          </tr>
+          <tr>
+            <td>Ref No.:</td>
+            <td>{{ref_no}}</td>
+
+            <td>Declaration Product:</td>
+            <td>{{desc_product}}</td>
+          </tr>
+          <tr>
+            <td>Unit:</td>
+            <td>{{unit}}</td>
+
+            <td>Comment:</td>
+            <td>{{comment}}</td>
+          </tr>
+          <tr>
+            <td>Name of Counter:</td>
+            <td>{{name_counter}}</td>
+
+            <td>Validation of Counter:</td>
+            <td>{{counter_valid}}</td>
+          </tr>
+          <tr>
+            <td>Name of manager:</td>
+            <td>{{warehouse.manager.fullname}}</td>
+
+            <td>Validation of manager:</td>
+            <td>{{manager_valid}}</td>
+          </tr>
+          <tr>
+            <td>Name of Client:</td>
+            <td>{{user.fullname}}</td>
+
+            <td>Validation of Client</td>
+            <td>{{client_valid}}</td>
+          </tr>
+          <tr>
+            <td>Customs:</td>
+            <td>{{customs}}</td>
+
+            <td>Status:</td>
+            <td>{{status}}</td>
+          </tr>
+          <tr>
+            <td>Unit:</td>
+            <td>{{unit}}</td>
+          </tr>
+          <tr>
+            <td>Created At</td>
+            <td>{{formattedDate createdAt}}</td>
+
+            <td>Last Update</td>
+            <td>{{formattedDate updatedAt}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="details">
+      <h2>Warehouse Information</h2>
+      <img src="{{ warehouse.image }}" alt="Warehouse Image">
+      <span><b>Name: </b>{{warehouse.name}}</span>
+    </div>
+
+    <div class="details">
+      <h2>Product Information</h2>
+      <p><b>Item Count: </b>{{ itemCount }}</p>
+      <p><b>Total Weight: </b>{{ totalWeight }}</p>
+      <table class="table-border" style="width: 60%;">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Quantity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each items}}
+          <tr>
+            <td>{{ name }}</td>
+            <td>{{ quantity }}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="details">
+      <h2>Transaction Details</h2>
+      <p><b>Transaction Id: </b>{{ transaction.id }}</p>
+      <p><b>Mode: </b>{{ transaction.mode }}</p>
+      <p><b>Status: </b>{{ transaction.status }}</p>
+      <p><b>Amount: </b>{{ transaction.amount }}</p>
+      <p><b>Date: </b>{{formattedDate transaction.createdAt }}</p>
+    </div>
+  </div>
+  </div>
+</body>
+
+</html>

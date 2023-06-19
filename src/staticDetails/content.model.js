@@ -41,7 +41,23 @@ const contentModel = db.define(
         notEmpty: { msg: "About Us is required." },
         notNull: { msg: "About Us is required." },
       },
-    }
+    },
+    privacy_policy: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: "Privacy Policy is required." },
+        notNull: { msg: "Privacy Policy is required." },
+      },
+    },
+    terms_and_cond: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: "Terms and Condition is required." },
+        notNull: { msg: "Terms and Condition is required." },
+      },
+    },
   },
   { timestamps: true }
 )
