@@ -2,16 +2,19 @@ var Handlebars = require("handlebars");
 var pdf = require("html-pdf");
 
 Handlebars.registerHelper("formattedDate", function (date) {
-  if(isNaN(date)) return;
+  if (isNaN(date)) return;
   // console.log({ date, type: typeof date });
   if (date) return new Date(date).toISOString().slice(0, 10);
 });
 
-Handlebars.registerHelper('isValidDate', function(date) {
-  return date instanceof Date && !isNaN(date);
+Handlebars.registerHelper('isValidDate', function (date) {
+  console.log({ date });
+  const res = date instanceof Date && !isNaN(date);
+  console.log({ res });
+  return res;
 });
 
-Handlebars.registerHelper('increment', function(value) {
+Handlebars.registerHelper('increment', function (value) {
   // Add 1 to the value and return the result
   return value + 1;
 });

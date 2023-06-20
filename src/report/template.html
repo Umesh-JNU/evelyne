@@ -24,52 +24,52 @@
 
 <body>
 
-  {{#each orders}}
-  <h2>{{client_name}}</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>No</th>
-        <th>Date/Entry</th>
-        <th>Declaration</th>
-        <th>Product</th>
-        <th>Total Qty</th>
-        <th>Kg/Unit</th>
-        <th>Total Kg</th>
-        <th>Truck No</th>
-        <th>Comments</th>
-        <th>Value per unit/USD</th>
-        <th>Total value/$/single window rate</th>
-        <th>Total value/local currency</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#each order}}
-      {{#if (isValidDate arrival_date)}}
-      <tr>
-        <td>{{increment @index}}</td>
-        <td>{{formattedDate arrival_date}}</td>
-        <td>{{quantity_decl}}</td>
-        <td>
-          {{#each items}}
-          <p> {{name}} </p>
-          {{/each}}
-        </td>
-        <td>{{itemCount}}</td>
-        <td>Kg</td>
-        <td>{{totalWeight}}</td>
-        <td>{{truck_no}}</td>
-        <td>{{comment}}</td>
-        <td>10</td>
-        <td>100</td>
-        <td>100</td>
-      </tr>
-      {{/if}}
-      
-      {{/each}}
-    </tbody>
-  </table>
-  {{/each}}
+    {{#each orders}}
+    <h2>{{client_name}}</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Date/Entry</th>
+          <th>Declaration</th>
+          <th>Product</th>
+          <th>Total Qty</th>
+          <th>Kg/Unit</th>
+          <th>Total Kg</th>
+          <th>Truck No</th>
+          <th>Comments</th>
+          <th>Value per unit/USD</th>
+          <th>Total value/$/single window rate</th>
+          <th>Total value/local currency</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each order}}
+        {{#if (isValidDate arrival_date)}}
+        <tr>
+          <td>{{increment @index}}</td>
+          <td>{{formattedDate arrival_date}}</td>
+          <td>{{quantity_decl}}</td>
+          <td>
+            {{#each items}}
+            <p> {{name}} </p>
+            {{/each}}
+          </td>
+          <td>{{itemCount}}</td>
+          <td>Kg</td>
+          <td>{{totalWeight}}</td>
+          <td>{{truck_no}}</td>
+          <td>{{comment}}</td>
+          <td>10</td>
+          <td>100</td>
+          <td>100</td>
+        </tr>
+        {{/if}}
+
+        {{/each}}
+      </tbody>
+    </table>
+    {{/each}}
 
   {{#each orders}}
   <h2>{{client_name}}</h2>
@@ -92,7 +92,7 @@
     </thead>
     <tbody>
       {{#each order}}
-      {{#if (isValidDate trans_date)}}
+      {{#ifCond (isValidDate trans_date)}}
       <tr>
         <td>{{increment @index}}</td>
         <td>{{formattedDate trans_date}}</td>
@@ -111,12 +111,12 @@
         <td>100</td>
         <td>100</td>
       </tr>
-      {{/if}}
+      {{/ifCond}}
       {{/each}}
     </tbody>
   </table>
   {{/each}}
-  
+
   {{#each orders}}
   <h2>{{client_name}}</h2>
   <table>

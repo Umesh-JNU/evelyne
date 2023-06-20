@@ -111,7 +111,7 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
   });
 
   groupedOrders = Object.entries(groupedOrders).map(([k, v]) => v);
-  
+
   groupedOrders = groupedOrders.map(order => {
     return { client_name: order[0].user.fullname, order }
   })
@@ -199,3 +199,31 @@ exports.transaction = catchAsyncError(async (req, res, next) => {
   console.log({ transaction: transaction.toJSON().comments })
   await sendReport('transaction.html', 'Transaction Report', transaction.toJSON(), res);
 });
+
+exports.bondReport = catchAsyncError(async (req, res, next) => {
+  const data = [
+    {
+      date: '2023-06-19',
+      declaration: 'Declaration',
+      value: 159,
+      deposit: 0,
+      credit: 159,
+    },
+    {
+      date: '2023-06-20',
+      declaration: 'Declaration',
+      value: 179,
+      deposit: 0,
+      credit: 179,
+    },
+    {
+      date: '2023-06-21',
+      declaration: 'Declaration',
+      value: 200,
+      deposit: 0,
+      credit: 200,
+    }
+  ];
+
+  await sendReport('bondReport.html', 'Bond Report', { data }, res);
+})

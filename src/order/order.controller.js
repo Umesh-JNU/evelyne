@@ -157,6 +157,22 @@ exports.deleteOrder = catchAsyncError(async (req, res, next) => {
 	res.status(200).json({ message: "Order Deleted Successfully.", isDeleted });
 })
 
+const saveTrackTime = (order, newStatus) => {
+	console.log({order: order.toJSON(), newStatus})
+	switch (newStatus) {
+		case "in-bound":
+			order.arrival_date = new Date();
+			break;
+		case "out-bound":
+			order.trans_date = new Date();
+			break;
+		case "exit":
+			order.exit_date = new Date();
+			break;
+	}
+	console.log("afeter", {order: order.toJSON(), newStatus})
+};
+
 exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 	console.log("change status", req.body);
 	const { id } = req.params;
@@ -192,6 +208,8 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 
 		// other we update the status
 		order.status = newStatus;
+		saveTrackTime(order, newStatus);
+
 		var managerNotiText = texts[currentStatus];
 	}
 
@@ -216,10 +234,12 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 				return next(new ErrorHandler("Can't be approved as client hasn't approved.", 400));
 
 			// otherwise we update the manager_valid field to true and also create notifications.
+			saveTrackTime(order, newStatus);
 			order.manager_valid = true;
 		}
 		// if it is not exit we update the status
 		else {
+			saveTrackTime(order, newStatus);
 			order.status = newStatus;
 		}
 
