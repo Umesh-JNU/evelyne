@@ -115,8 +115,10 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
   groupedOrders = groupedOrders.map(order => {
     return { client_name: order[0].user.fullname, order }
   })
+
   // return res.json({ groupedOrders })
   console.log({ groupedOrders });
+  groupedOrders.forEach(v => console.log({ v: v.order }));
   console.log("download report", req.query);
   await sendReport("template.html", title, { orders: groupedOrders }, res);
 });
