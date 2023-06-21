@@ -3,6 +3,20 @@
 
 <head>
   <style>
+    html {
+      zoom: 0.55;
+    }
+
+    table,
+    tr,
+    td,
+    th,
+    tbody,
+    thead,
+    tfoot {
+      page-break-inside: avoid !important;
+    }
+
     body {
       font-family: Arial, sans-serif;
     }
@@ -47,6 +61,8 @@
 
 <body>
   <div class="container">
+    <h1 style="text-align: center;">{{heading}}</h1>
+
     <table>
       <tbody>
         <tr>
@@ -71,7 +87,7 @@
         </tr>
         <tr>
           <td>Date:</td>
-          <td>{{formattedDate createdAt}}</td>
+          <td>{{createdAt}}</td>
         </tr>
       </tbody>
     </table>

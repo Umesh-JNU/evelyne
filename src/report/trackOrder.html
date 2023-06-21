@@ -7,6 +7,16 @@
       zoom: 0.55;
     }
 
+    table,
+    tr,
+    td,
+    th,
+    tbody,
+    thead,
+    tfoot {
+      page-break-inside: avoid !important;
+    }
+
     body {
       font-family: Arial, sans-serif;
     }
@@ -95,111 +105,113 @@
 
 <body>
   <div class="container">
+    <h1 style="text-align: center;">{{heading}}</h1>
+
     <div class="details">
-      <h2>Order #{{id}} Details</h2>
+      <h2>Order #{{order.id}} Details</h2>
       <table class="table">
         <tbody>
           <tr>
             <td>Tin No.:</td>
-            <td>{{tin_no}}</td>
+            <td>{{order.tin_no}}</td>
 
             <td>Address:</td>
-            <td>{{address}}</td>
+            <td>{{order.address}}</td>
           </tr>
           <tr>
             <td>Transit Company:</td>
-            <td>{{transit_company}}</td>
+            <td>{{order.transit_company}}</td>
 
             <td>Consignee:</td>
-            <td>{{consignee}}</td>
+            <td>{{order.consignee}}</td>
           </tr>
           <tr>
             <td>Custom Agent:</td>
-            <td>{{custom_agent}}</td>
+            <td>{{order.custom_agent}}</td>
 
             <td>DDCOM No.:</td>
-            <td>{{DDCOM_no}}</td>
+            <td>{{order.DDCOM_no}}</td>
           </tr>
           <tr>
             <td>Quantity Declaration:</td>
-            <td>{{quantity_decl}}</td>
+            <td>{{order.quantity_decl}}</td>
 
             <td>Physical Quantity:</td>
-            <td>{{physical_quant}}</td>
+            <td>{{order.physical_quant}}</td>
           </tr>
           <tr>
             <td>Arrival Date:</td>
-            <td>{{formattedDate arrival_date}}</td>
+            <td>{{order.arrival_date}}</td>
 
             <td>Transhipment Date:</td>
-            <td>{{formattedDate trans_date}}</td>
+            <td>{{order.trans_date}}</td>
           </tr>
           <tr>
             <td>Exit Date:</td>
-            <td>{{formattedDate exit_date}}</td>
+            <td>{{order.exit_date}}</td>
 
             <td>Last Storage Date:</td>
-            <td>{{formattedDate last_storage_date}}</td>
+            <td>{{order.last_storage_date}}</td>
           </tr>
           <tr>
             <td>Truck No.:</td>
-            <td>{{truck_no}}</td>
+            <td>{{order.truck_no}}</td>
 
             <td>Transporter:</td>
-            <td>{{transporter}}</td>
+            <td>{{order.transporter}}</td>
           </tr>
           <tr>
             <td>Ref No.:</td>
-            <td>{{ref_no}}</td>
+            <td>{{order.ref_no}}</td>
 
             <td>Declaration Product:</td>
-            <td>{{desc_product}}</td>
+            <td>{{order.desc_product}}</td>
           </tr>
           <tr>
             <td>Unit:</td>
-            <td>{{unit}}</td>
+            <td>{{order.unit}}</td>
 
             <td>Comment:</td>
-            <td>{{comment}}</td>
+            <td>{{order.comment}}</td>
           </tr>
           <tr>
             <td>Name of Counter:</td>
-            <td>{{name_counter}}</td>
+            <td>{{order.name_counter}}</td>
 
             <td>Validation of Counter:</td>
-            <td>{{counter_valid}}</td>
+            <td>{{order.counter_valid}}</td>
           </tr>
           <tr>
             <td>Name of manager:</td>
-            <td>{{warehouse.manager.fullname}}</td>
+            <td>{{order.warehouse.manager.fullname}}</td>
 
             <td>Validation of manager:</td>
-            <td>{{manager_valid}}</td>
+            <td>{{order.manager_valid}}</td>
           </tr>
           <tr>
             <td>Name of Client:</td>
-            <td>{{user.fullname}}</td>
+            <td>{{order.user.fullname}}</td>
 
             <td>Validation of Client</td>
-            <td>{{client_valid}}</td>
+            <td>{{order.client_valid}}</td>
           </tr>
           <tr>
             <td>Customs:</td>
-            <td>{{customs}}</td>
+            <td>{{order.customs}}</td>
 
             <td>Status:</td>
-            <td>{{status}}</td>
+            <td>{{order.status}}</td>
           </tr>
           <tr>
             <td>Unit:</td>
-            <td>{{unit}}</td>
+            <td>{{order.unit}}</td>
           </tr>
           <tr>
             <td>Created At</td>
-            <td>{{formattedDate createdAt}}</td>
+            <td>{{order.createdAt}}</td>
 
             <td>Last Update</td>
-            <td>{{formattedDate updatedAt}}</td>
+            <td>{{order.updatedAt}}</td>
           </tr>
         </tbody>
       </table>
@@ -207,14 +219,14 @@
 
     <div class="details">
       <h2>Warehouse Information</h2>
-      <img src="{{ warehouse.image }}" alt="Warehouse Image">
-      <span><b>Name: </b>{{warehouse.name}}</span>
+      <img src="{{ order.warehouse.image }}" alt="Warehouse Image">
+      <span><b>Name: </b>{{order.warehouse.name}}</span>
     </div>
 
     <div class="details">
       <h2>Product Information</h2>
-      <p><b>Item Count: </b>{{ itemCount }}</p>
-      <p><b>Total Weight: </b>{{ totalWeight }}</p>
+      <p><b>Item Count: </b>{{ order.itemCount }}</p>
+      <p><b>Total Weight: </b>{{ order.totalWeight }}</p>
       <table class="table-border" style="width: 60%;">
         <thead>
           <tr>
@@ -223,10 +235,10 @@
           </tr>
         </thead>
         <tbody>
-          {{#each items}}
+          {{#each order.items}}
           <tr>
-            <td>{{ name }}</td>
-            <td>{{ quantity }}</td>
+            <td>{{name}}</td>
+            <td>{{quantity}}</td>
           </tr>
           {{/each}}
         </tbody>
@@ -235,11 +247,11 @@
 
     <div class="details">
       <h2>Transaction Details</h2>
-      <p><b>Transaction Id: </b>{{ transaction.id }}</p>
-      <p><b>Mode: </b>{{ transaction.mode }}</p>
-      <p><b>Status: </b>{{ transaction.status }}</p>
-      <p><b>Amount: </b>{{ transaction.amount }}</p>
-      <p><b>Date: </b>{{formattedDate transaction.createdAt }}</p>
+      <p><b>Transaction Id: </b>{{ order.transaction.id }}</p>
+      <p><b>Mode: </b>{{ order.transaction.mode }}</p>
+      <p><b>Status: </b>{{ order.transaction.status }}</p>
+      <p><b>Amount: </b>{{ order.transaction.amount }}</p>
+      <p><b>Date: </b>{{ order.transaction.createdAt }}</p>
     </div>
   </div>
   </div>

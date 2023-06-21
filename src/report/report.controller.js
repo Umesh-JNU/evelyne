@@ -1,7 +1,7 @@
 const ErrorHandler = require("../../utils/errorHandler")
 const catchAsyncError = require("../../utils/catchAsyncError")
 
-var pdf = require("../../utils/pdf");
+var pdf = require("pdf-creator-node");
 var fs = require("fs");
 const path = require('path');
 const { orderModel, orderItemModel, includeCountAttr } = require("../order/order.model");
@@ -12,49 +12,130 @@ const { transactionModel } = require("../transaction");
 
 
 // Read HTML Template
-// const templatePath = path.join(__dirname, 'template.html');
 const templateHtml = (templateName) => {
   const templatePath = path.join(__dirname, templateName);
   return fs.readFileSync(templatePath, 'utf-8');
 }
 
-// contents: `<h1 style="text-align: center;">Daily Report (Entry and Exit)</h1>'
-const getOption = (title) => {
-  return {
-    format: "A3",
-    orientation: "portrait",
-    border: "10mm",
-    header: {
-      height: "10mm",
-      contents: `<h1 style="text-align: center; font-size: 2.5rem;">${title}</h1>`
-    },
-    footer: {
-      height: "20mm",
-      contents: {
-        first: 'Cover page',
-        2: 'Second page', // Any page number is working. 1-based index
-        default: '<span style="color: #444;">{{page}}</span>/<span>{{pages}}</span>', // fallback value
-        last: 'Last Page'
-      }
-    },
-  };
-}
+const options = {
+  format: "A4",
+  orientation: "portrait",
+  border: "10mm",
+  // header: {
+  //   height: "10mm",
+  //   contents: `<h1 style="text-align: center; font-size: 2.5rem;">${title}</h1>`,
+  // },
+  footer: {
+    height: "10mm",
+    contents: {
+      // first: 'Cover page',
+      // 2: 'Second page', // Any page number is working. 1-based index
+      default: '<span style="color: #444; float: right; margin-top: 20px;">{{page}}</span>' // /<span>{{pages}}</span>', // fallback value
+      // last: 'Last Page'
+    }
+  },
+};
 
-const sendReport = async (templateName, title, data, res) => {
+const sendReport = async (templateName, data, res) => {
   const report = await pdf.create({
     html: templateHtml(templateName),
     data,
     path: "./output.pdf",
     type: "buffer",
-  }, getOption(title));
+  }, options);
 
   res.setHeader('Content-Type', 'application/pdf');
   res.status(200).send(report);
 };
 
+const getOrdersJSON = async (date_type, startDate, endDate) => {
+  const orders = await orderModel.findAll({
+    where: {
+      createdAt: {
+        [Op.gte]: startDate,
+        [Op.lt]: endDate,
+      },
+      [date_type]: {
+        [Op.not]: null
+      }
+    },
+    include: [{
+      model: userModel,
+      as: "user",
+      attributes: ["id", "fullname"]
+    }, {
+      model: orderItemModel,
+      as: "items",
+      attributes: ["id", "name", "quantity"],
+    }],
+    attributes: {
+      include: includeCountAttr
+    }
+  });
+
+  // map a particular user with thier orders
+  let groupedOrders = {};
+  orders.forEach(order => {
+    const userId = order.userId;
+    if (!groupedOrders[userId]) {
+      groupedOrders[userId] = [];
+    }
+    groupedOrders[userId].push(order.toJSON());
+  });
+
+  // now convert into list of list of orders 
+  // for eg [
+  //   [order1, order2],   // for user1
+  //   [order1]            // for user2
+  // ]
+  groupedOrders = Object.entries(groupedOrders).map(([k, v]) => v);
+
+  groupedOrders.forEach(orders => {
+    let index = 1;
+    orders.forEach(order => {
+      order.index = index;
+      order[date_type] = order[date_type].toISOString().split('T')[0]; index++;
+    })
+  });
+
+  // now the above list in below format
+  // for eg [
+  //   {client_name: order1.user.fullname, orders: [order1, order2],           // for user1
+  //   {client_name: order1.user.fullname, orders: [order1, order2, order3],   // for user1
+  // ]
+  groupedOrders = groupedOrders.map(orders => {
+    return { client_name: orders[0].user.fullname, orders }
+  })
+
+  console.log({ groupedOrders });
+  return groupedOrders;
+};
+
+const formattedDate = (date) => {
+  if (!date || isNaN(date)) return;
+  return date.toISOString().split('T')[0];
+};
+
+const formattedOrder = (order) => {
+  order.arrival_date = formattedDate(order.arrival_date);
+  order.trans_date = formattedDate(order.trans_date);
+  order.exit_date = formattedDate(order.exit_date);
+  order.last_storage_date = formattedDate(order.last_storage_date);
+  order.createdAt = formattedDate(order.createdAt);
+  order.updatedAt = formattedDate(order.updatedAt);
+  order.transaction.createdAt = formattedDate(order.transaction.createdAt);
+
+  return order;
+};
+
+const formatedTransaction = (transaction) => {
+  transaction.createdAt = formattedDate(transaction.createdAt);
+  return transaction;
+};
+
 exports.getReport = catchAsyncError(async (req, res, next) => {
   const year = parseInt(req.query.year);
-  const month = parseInt(req.query.month);
+  const month = parseInt(req.query.month) - 1;
   const date = req.query.date;
 
   if (year) {
@@ -80,47 +161,12 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Bad Request", 400));
   }
 
-  const orders = await orderModel.findAll({
-    where: {
-      createdAt: {
-        [Op.gte]: startDate,
-        [Op.lt]: endDate
-      }
-    },
-    include: [{
-      model: userModel,
-      as: "user",
-      attributes: ["id", "fullname"]
-    }, {
-      model: orderItemModel,
-      as: "items",
-      attributes: ["id", "name", "quantity"],
-    }],
-    attributes: {
-      include: includeCountAttr
-    }
-  });
+  const arrivedOrders = await getOrdersJSON('arrival_date', startDate, endDate);
+  const transOrders = await getOrdersJSON('trans_date', startDate, endDate);
+  const exitOrders = await getOrdersJSON('exit_date', startDate, endDate);
 
-  let groupedOrders = {};
-  orders.forEach(order => {
-    const userId = order.userId;
-    if (!groupedOrders[userId]) {
-      groupedOrders[userId] = [];
-    }
-    groupedOrders[userId].push(order.toJSON());
-  });
-
-  groupedOrders = Object.entries(groupedOrders).map(([k, v]) => v);
-
-  groupedOrders = groupedOrders.map(order => {
-    return { client_name: order[0].user.fullname, order }
-  })
-
-  // return res.json({ groupedOrders })
-  console.log({ groupedOrders });
-  groupedOrders.forEach(v => console.log({ v: v.order }));
   console.log("download report", req.query);
-  await sendReport("template.html", title, { orders: groupedOrders }, res);
+  await sendReport("template.html", { heading: title, arrivedOrders, transOrders, exitOrders }, res);
 });
 
 exports.trackOrder = catchAsyncError(async (req, res, next) => {
@@ -161,9 +207,8 @@ exports.trackOrder = catchAsyncError(async (req, res, next) => {
   });
 
   if (!order) return next(new ErrorHandler("Order not found", 404));
-  // return res.json({ order })
-  // console.log({ order: order.toJSON() })
-  await sendReport('trackOrder.html', 'Track Order Report', order.toJSON(), res);
+
+  await sendReport('trackOrder.html', { heading: 'Track Order Report', order: formattedOrder(order.toJSON()) }, res);
 });
 
 exports.transaction = catchAsyncError(async (req, res, next) => {
@@ -199,7 +244,7 @@ exports.transaction = catchAsyncError(async (req, res, next) => {
 
   // res.status(200).json({ transaction });
   console.log({ transaction: transaction.toJSON().comments })
-  await sendReport('transaction.html', 'Transaction Report', transaction.toJSON(), res);
+  await sendReport('transaction.html', { heading: 'Transaction Report', ...formatedTransaction(transaction.toJSON()) }, res);
 });
 
 exports.bondReport = catchAsyncError(async (req, res, next) => {
@@ -227,5 +272,5 @@ exports.bondReport = catchAsyncError(async (req, res, next) => {
     }
   ];
 
-  await sendReport('bondReport.html', 'Bond Report', { data }, res);
+  await sendReport('bondReport.html', { heading: 'Bond Report', data }, res);
 })

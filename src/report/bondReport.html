@@ -7,6 +7,16 @@
       zoom: 0.55;
     }
 
+    table,
+    tr,
+    td,
+    th,
+    tbody,
+    thead,
+    tfoot {
+      page-break-inside: avoid !important;
+    }
+
     body {
       font-family: Arial, sans-serif;
     }
@@ -52,6 +62,8 @@
 
 <body>
   <div class="container">
+    <h1 style="text-align: center;">{{heading}}</h1>
+
     <div class="details">
       <!-- <h2>Order #{{id}} Details</h2> -->
       <table class="table">

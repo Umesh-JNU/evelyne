@@ -9,6 +9,16 @@
       zoom: 0.55;
     }
 
+    table,
+    tr,
+    td,
+    th,
+    tbody,
+    thead,
+    tfoot {
+      page-break-inside: avoid !important;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -27,8 +37,9 @@
 </head>
 
 <body>
+  <h1 style="text-align: center;">{{heading}}</h1>
 
-  {{#each orders}}
+  {{#each arrivedOrders}}
   <h2>{{client_name}}</h2>
   <table>
     <thead>
@@ -48,11 +59,10 @@
       </tr>
     </thead>
     <tbody>
-      {{#each order}}
-      {{#if (isValidDate arrival_date)}}
+      {{#each orders}}
       <tr>
-        <td>{{increment @index}}</td>
-        <td>{{formattedDate arrival_date}}</td>
+        <td>{{index}}</td>
+        <td>{{arrival_date}}</td>
         <td>{{quantity_decl}}</td>
         <td>
           {{#each items}}
@@ -68,19 +78,18 @@
         <td>100</td>
         <td>100</td>
       </tr>
-      {{/if}}
       {{/each}}
     </tbody>
   </table>
   {{/each}}
 
-  {{#each orders}}
+  {{#each transOrders}}
   <h2>{{client_name}}</h2>
   <table>
     <thead>
       <tr>
         <th>No</th>
-        <th>Date/Transhipment</th>
+        <th>Date/Tranship</th>
         <th>Declaration</th>
         <th>Product</th>
         <th>Total Qty</th>
@@ -94,11 +103,10 @@
       </tr>
     </thead>
     <tbody>
-      {{#each order}}
-      {{#if (isValidDate trans_date)}}
+      {{#each orders}}
       <tr>
-        <td>{{increment @index}}</td>
-        <td>{{formattedDate trans_date}}</td>
+        <td>{{index}}</td>
+        <td>{{trans_date}}</td>
         <td>{{quantity_decl}}</td>
         <td>
           {{#each items}}
@@ -114,13 +122,12 @@
         <td>100</td>
         <td>100</td>
       </tr>
-      {{/if}}
       {{/each}}
     </tbody>
   </table>
   {{/each}}
 
-  {{#each orders}}
+  {{#each exitOrders}}
   <h2>{{client_name}}</h2>
   <table>
     <thead>
@@ -140,11 +147,10 @@
       </tr>
     </thead>
     <tbody>
-      {{#each order}}
-      {{#if (isValidDate exit_date)}}
+      {{#each orders}}
       <tr>
-        <td>{{increment @index}}</td>
-        <td>{{formattedDate exit_date}}</td>
+        <td>{{index}}</td>
+        <td>{{exit_date}}</td>
         <td>{{quantity_decl}}</td>
         <td>
           {{#each items}}
@@ -160,7 +166,6 @@
         <td>100</td>
         <td>100</td>
       </tr>
-      {{/if}}
       {{/each}}
     </tbody>
   </table>
