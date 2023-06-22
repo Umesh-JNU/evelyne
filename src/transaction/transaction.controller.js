@@ -95,14 +95,13 @@ exports.updateTransaction = catchAsyncError(async (req, res, next) => {
 	console.log("update transaction", req.body);
 	const { id } = req.params;
 
-	const [_, transaction] = await transactionModel.update(req.body, {
+	const [isUpdated] = await transactionModel.update(req.body, {
 		where: { id },
-		returning: true, // Return the updated transaction object
 	});
 
-	if (transaction === 0) return next(new ErrorHandler("Transaction not found.", 404));
+	if (isUpdated === 0) return next(new ErrorHandler("Transaction not found.", 404));
 
-	res.status(200).json({ message: "Transaction updated successfully.", transaction });
+	res.status(200).json({ message: "Transaction updated successfully.", isUpdated });
 })
 
 exports.addComment = catchAsyncError(async (req, res, next) => {

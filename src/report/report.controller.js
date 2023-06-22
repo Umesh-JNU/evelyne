@@ -10,7 +10,6 @@ const { warehouseModel } = require("../warehouse");
 const { userModel } = require("../user");
 const { transactionModel } = require("../transaction");
 
-
 // Read HTML Template
 const templateHtml = (templateName) => {
   const templatePath = path.join(__dirname, templateName);
@@ -18,7 +17,7 @@ const templateHtml = (templateName) => {
 }
 
 const options = {
-  format: "A4",
+  format: "A3",
   orientation: "portrait",
   border: "10mm",
   // header: {
@@ -48,9 +47,10 @@ const sendReport = async (templateName, data, res) => {
   res.status(200).send(report);
 };
 
-const getOrdersJSON = async (date_type, startDate, endDate) => {
+const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
   const orders = await orderModel.findAll({
     where: {
+      warehouseId,
       createdAt: {
         [Op.gte]: startDate,
         [Op.lt]: endDate,
@@ -134,6 +134,10 @@ const formatedTransaction = (transaction) => {
 };
 
 exports.getReport = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+  if (!id)
+    return next(new ErrorHandler("Please provide the warehouseId", 400));
+    
   const year = parseInt(req.query.year);
   const month = parseInt(req.query.month) - 1;
   const date = req.query.date;
@@ -161,9 +165,13 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Bad Request", 400));
   }
 
-  const arrivedOrders = await getOrdersJSON('arrival_date', startDate, endDate);
-  const transOrders = await getOrdersJSON('trans_date', startDate, endDate);
-  const exitOrders = await getOrdersJSON('exit_date', startDate, endDate);
+  const arrivedOrders = await getOrdersJSON('arrival_date', id, startDate, endDate);
+  const transOrders = await getOrdersJSON('trans_date', id, startDate, endDate);
+  const exitOrders = await getOrdersJSON('exit_date', id, startDate, endDate);
+
+  if (arrivedOrders.length === 0 && transOrders.length === 0 && exitOrders.length === 0) {
+    return next(new ErrorHandler("No orders", 400));
+  }
 
   console.log("download report", req.query);
   await sendReport("template.html", { heading: title, arrivedOrders, transOrders, exitOrders }, res);
@@ -248,29 +256,41 @@ exports.transaction = catchAsyncError(async (req, res, next) => {
 });
 
 exports.bondReport = catchAsyncError(async (req, res, next) => {
-  const data = [
-    {
-      date: '2023-06-19',
-      declaration: 'Declaration',
-      value: 159,
-      deposit: 0,
-      credit: 159,
-    },
-    {
-      date: '2023-06-20',
-      declaration: 'Declaration',
-      value: 179,
-      deposit: 0,
-      credit: 179,
-    },
-    {
-      date: '2023-06-21',
-      declaration: 'Declaration',
-      value: 200,
-      deposit: 0,
-      credit: 200,
-    }
-  ];
+  const { id } = req.params;
+  const transactions = await transactionModel.findAll({
+    include: [{
+      model: orderModel,
+      as: "order",
+      where: { warehouseId: id },
+      attributes: ["quantity_decl"],
+    }],
+    where: { status: 'paid' }
+  });
 
-  await sendReport('bondReport.html', { heading: 'Bond Report', data }, res);
+  if (!transactions || transactions.length === 0) {
+    return next(new ErrorHandler("No Transaction Today.", 400));
+  };
+
+  let groupedTransaction = {};
+  transactions.forEach(transaction => {
+    console.log({ transaction })
+    const date = transaction.updatedAt.toISOString().split('T')[0];
+    if (!groupedTransaction[date]) {
+      groupedTransaction[date] = {
+        date,
+        declaration: 'declaration',
+        value: 0,
+        deposit: 0,
+        credit: 0,
+      };
+    }
+
+    groupedTransaction[date].credit += transaction.amount;
+  });
+
+  groupedTransaction = Object.entries(groupedTransaction).map(([k, v]) => v);
+
+  console.log({ groupedTransaction })
+
+  await sendReport('bondReport.html', { heading: 'Bond Report', data: groupedTransaction }, res);
 })

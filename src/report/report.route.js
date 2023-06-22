@@ -3,9 +3,9 @@ const { getReport, trackOrder, transaction, bondReport } = require("./report.con
 const { auth, authRole } = require("../../middlewares/auth");
 const router = express.Router();
 
-router.get("/", auth, authRole(["admin", "manager", "controller"]), getReport);
-router.get("/track-order/:id", auth, trackOrder);
-router.get("/transaction/:id", auth, authRole(["controller"]), transaction);
-router.get("/bond-report", auth, bondReport);
+router.get("/:id", auth, authRole(["admin", "manager", "controller"]), getReport); // id = warehouse id
+router.get("/track-order/:id", auth, trackOrder); // id = order id
+router.get("/transaction/:id", auth, authRole(["controller"]), transaction); // id = transaction id
+router.get("/bond-report/:id", auth, bondReport); // id = warehouse id
 
 module.exports = router;
