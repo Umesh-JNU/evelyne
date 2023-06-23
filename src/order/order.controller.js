@@ -158,7 +158,7 @@ exports.deleteOrder = catchAsyncError(async (req, res, next) => {
 })
 
 const saveTrackTime = (order, newStatus) => {
-	console.log({order: order.toJSON(), newStatus})
+	console.log({ order: order.toJSON(), newStatus })
 	switch (newStatus) {
 		case "in-bound":
 			order.arrival_date = new Date();
@@ -170,7 +170,24 @@ const saveTrackTime = (order, newStatus) => {
 			order.exit_date = new Date();
 			break;
 	}
-	console.log("afeter", {order: order.toJSON(), newStatus})
+	console.log("afeter", { order: order.toJSON(), newStatus })
+};
+
+const generateNotification = async (userNotiText, managerNotiText, order, managerId) => {
+	// for user
+	await notificationModel.create({
+		text: userNotiText,
+		userId: order.userId,
+		orderId: order.id
+	});
+
+	// for manager
+	await notificationModel.create({
+		text: managerNotiText,
+		userId: managerId,
+		orderId: order.id
+	});
+
 };
 
 exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
@@ -195,6 +212,10 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 	if (!newStatus) {
 		return next(new ErrorHandler("Bad Request", 400));
 	}
+
+	const userNotiText = texts[currentStatus];
+	var managerNotiText = newStatus === 'exit' ? `You have approved the order ${id} for exit.` : texts[currentStatus];
+
 	// CASE - when only order status is to be updated
 	if (status) {
 		/**
@@ -206,18 +227,14 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 		if (status !== newStatus)
 			return next(new ErrorHandler(`Status can't be updated from ${currentStatus} to ${status}`, 400));
 
+		await generateNotification(userNotiText, managerNotiText, order, userId);
 		// other we update the status
 		order.status = newStatus;
 		saveTrackTime(order, newStatus);
-
-		var managerNotiText = texts[currentStatus];
 	}
 
 	// CASE - when manager is approving 
 	if (manager_valid) {
-		const userNotiText = texts[currentStatus];
-		var managerNotiText = newStatus === 'exit' ? `You have approved the order ${id} for exit.` : texts[currentStatus];
-
 		/**
 		 * We check the new status
 		 * if it is `exit` that means now manager has done all approval except for the last (for exit).
@@ -243,19 +260,7 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 			order.status = newStatus;
 		}
 
-		// for user
-		await notificationModel.create({
-			text: userNotiText,
-			userId: order.userId,
-			orderId: order.id
-		});
-
-		// for manager
-		await notificationModel.create({
-			text: managerNotiText,
-			userId,
-			orderId: order.id
-		});
+		await generateNotification(userNotiText, managerNotiText, order, userId);
 	}
 
 	// after everystep is okay we save the order.
@@ -268,12 +273,32 @@ exports.clientValidation = catchAsyncError(async (req, res, next) => {
 	const { id } = req.params;
 	const userId = req.userId;
 
-	const order = await orderModel.findOne({ where: { userId, id } });
+	const order = await orderModel.findOne({
+		where: { userId, id },
+		include: [{
+			model: warehouseModel,
+			as: "warehouse",
+			include: [{
+				model: userModel,
+				as: "manager",
+			}]
+		}]
+	});
 	if (!order) return next(new ErrorHandler("Order not found."));
+
+	if (order.client_valid)
+		return next(new ErrorHandler("Already Approved.", 400));
 
 	console.log({ order })
 	order.client_valid = true;
 	await order.save();
+
+	await generateNotification(
+		`You have approved for the exit of order ${id}`,
+		`Client has approved for the exit of  order ${id}`,
+		order,
+		order.warehouse?.manager?.id
+	);
 
 	res.status(200).json({ message: `You have approve order ${id} for exit from warehouse.` });
 });

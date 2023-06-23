@@ -137,7 +137,7 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
   if (!id)
     return next(new ErrorHandler("Please provide the warehouseId", 400));
-    
+
   const year = parseInt(req.query.year);
   const month = parseInt(req.query.month) - 1;
   const date = req.query.date;
@@ -257,7 +257,40 @@ exports.transaction = catchAsyncError(async (req, res, next) => {
 
 exports.bondReport = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
-  const transactions = await transactionModel.findAll({
+  const { date } = req.query;
+
+  if (!date) {
+    return next(new ErrorHandler("Please select the date.", 400));
+  }
+
+  const startDate = new Date(date);
+  startDate.setUTCHours(0, 0, 0, 0);
+  const endDate = new Date(date);
+  endDate.setUTCHours(24, 0, 0, 0);
+  let transactions = await transactionModel.findAll({
+    where: {
+      updatedAt: {
+        [Op.gte]: startDate,
+        [Op.lt]: endDate,
+      },
+      warehouseId: id,
+      status: 'paid',
+    },
+  });
+
+  let transactionData = [];
+  transactions.forEach(transaction => {
+    console.log({ transaction })
+    transactionData.push({
+      date,
+      declaration: transaction.desc,
+      value: 0,
+      debit: transaction.type === 'debit' ? transaction.amount : 0,
+      credit: transaction.type === 'credit' ? transaction.amount : 0,
+    });
+  });
+
+  transactions = await transactionModel.findAll({
     include: [{
       model: orderModel,
       as: "order",
@@ -267,30 +300,22 @@ exports.bondReport = catchAsyncError(async (req, res, next) => {
     where: { status: 'paid' }
   });
 
-  if (!transactions || transactions.length === 0) {
+  transactions.forEach(transaction => {
+    console.log({ transaction })
+    transactionData.push({
+      date,
+      declaration: transaction.desc,
+      value: 0,
+      debit: transaction.type === 'debit' ? transaction.amount : 0,
+      credit: transaction.type === 'credit' ? transaction.amount : 0,
+    });
+  });
+
+  if (transactionData.length === 0) {
     return next(new ErrorHandler("No Transaction Today.", 400));
   };
 
-  let groupedTransaction = {};
-  transactions.forEach(transaction => {
-    console.log({ transaction })
-    const date = transaction.updatedAt.toISOString().split('T')[0];
-    if (!groupedTransaction[date]) {
-      groupedTransaction[date] = {
-        date,
-        declaration: 'declaration',
-        value: 0,
-        deposit: 0,
-        credit: 0,
-      };
-    }
+  console.log({ transactionData })
 
-    groupedTransaction[date].credit += transaction.amount;
-  });
-
-  groupedTransaction = Object.entries(groupedTransaction).map(([k, v]) => v);
-
-  console.log({ groupedTransaction })
-
-  await sendReport('bondReport.html', { heading: 'Bond Report', data: groupedTransaction }, res);
+  await sendReport('bondReport.html', { heading: 'Bond Report', data: transactionData }, res);
 })

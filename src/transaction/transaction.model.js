@@ -21,6 +21,22 @@ const commentModel = db.define(
 const transactionModel = db.define(
   "Transaction",
   {
+    type: {
+      type: DataTypes.ENUM("debit", "credit"),
+      defaultValue: "credit",
+    },
+    desc: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: {
+          msg: "Description can't be empty",
+        },
+        notNull: {
+          msg: "Description can't be null",
+        },
+      },
+    },
     mode: {
       type: DataTypes.ENUM("cash", "card", "bank"),
       defaultValue: "cash",
@@ -68,7 +84,8 @@ transactionModel.warehouseTrans = async function (warehouseId) {
     }],
     attributes: {
       exclude: ["orderId"]
-    }
+    },
+    order: [['createdAt', 'DESC']]
   });
 }
 

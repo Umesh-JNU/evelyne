@@ -148,6 +148,7 @@ orderModel.warehouseOrders = async function (warehouseId, status) {
       include: includeCountAttr,
       exclude: [...Object.keys(orderModel.rawAttributes).filter(attr => !["id", "status", "createdAt"].includes(attr)), "userId", "warehouseId"]
     },
+    order: [['createdAt', 'DESC']]
   })
 }
 
