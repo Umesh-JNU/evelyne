@@ -117,13 +117,15 @@ const formattedDate = (date) => {
 };
 
 const formattedOrder = (order) => {
+  console.log({ order })
   order.arrival_date = formattedDate(order.arrival_date);
   order.trans_date = formattedDate(order.trans_date);
   order.exit_date = formattedDate(order.exit_date);
   order.last_storage_date = formattedDate(order.last_storage_date);
   order.createdAt = formattedDate(order.createdAt);
   order.updatedAt = formattedDate(order.updatedAt);
-  order.transaction.createdAt = formattedDate(order.transaction.createdAt);
+  if (order.transaction)
+    order.transaction.createdAt = formattedDate(order.transaction.createdAt);
 
   return order;
 };

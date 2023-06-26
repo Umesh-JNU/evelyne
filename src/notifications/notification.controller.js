@@ -31,11 +31,15 @@ exports.updateNotification = catchAsyncError(async (req, res, next) => {
   console.log("update notification", req.body);
   const { id } = req.params;
   const userId = req.userId;
-  
-  const notification = await notificationModel.findOne({where: {id, userId}});
-  
+
+  const notification = await notificationModel.findOne({ where: { id, userId } });
+
   if (!notification) return next(new ErrorHandler("Notification not found", 404));
 
+  if (notification.seen) {
+    return res.status(200).json({ message: "Already seen." });
+  }
+  
   notification.seen = !notification.seen;
   await notification.save();
 
