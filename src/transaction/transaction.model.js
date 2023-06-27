@@ -92,10 +92,7 @@ transactionModel.warehouseTrans = async function (warehouseId) {
 transactionModel.getGrpCount = async function (query) {
   console.log({ query });
   return await this.findAll({
-    attributes: [
-      'status',
-      [db.fn('COUNT', db.col('transaction.id')), 'count'],
-    ],
+    attributes: ['status', [db.fn('COUNT', db.col('Transaction.id')), 'count']],
     group: ['status'],
     include: [{
       model: orderModel,

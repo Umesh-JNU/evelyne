@@ -36,11 +36,7 @@ exports.updateNotification = catchAsyncError(async (req, res, next) => {
 
   if (!notification) return next(new ErrorHandler("Notification not found", 404));
 
-  if (notification.seen) {
-    return res.status(200).json({ message: "Already seen." });
-  }
-  
-  notification.seen = !notification.seen;
+  notification.seen = true;
   await notification.save();
 
   res.status(200).json({ message: "Notification updated successfully." });
