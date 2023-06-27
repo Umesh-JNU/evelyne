@@ -155,7 +155,7 @@ exports.getWarehouseOrder = catchAsyncError(async (req, res, next) => {
 			if (!wId) return next(new ErrorHandler("Warehouse not assigned.", 400));
 
 			orders = await orderModel.warehouseOrders(wId, req.query.status);
-			
+
 			return res.status(200).json({ orders, image: "https://cdn0.iconfinder.com/data/icons/containers/512/palet03.png" });
 
 		default:
@@ -178,14 +178,23 @@ exports.warehouseAndAllOrders = catchAsyncError(async (req, res, next) => {
 		attributes: { exclude: ["managerId"] }
 	});
 
-	const housesAndOrders = await Promise.all(warehouses.map(async (warehouse) => {
+	const orderList = [];
+	for (const warehouse of warehouses) {
+		console.log({ warehouse });
 		const orders = await orderModel.warehouseOrders(warehouse.id);
 		console.log({ orders });
+		for (const order of orders) {
+			console.log({ order });
+			orderList.push({
+				...order.dataValues,
+				houseName: warehouse.name,
+				houseManager: warehouse.manager?.fullname,
+				houseImage: warehouse.image,
+			});
+		}
+	}
 
-		return { warehouse, orders };
-	}))
-
-	return res.status(200).json({ housesAndOrders });
+	return res.status(200).json({ orders: orderList });
 })
 
 exports.housesAndTransactionCount = catchAsyncError(async (req, res, next) => {
