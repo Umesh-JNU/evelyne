@@ -88,12 +88,12 @@ exports.myWarehouse = catchAsyncError(async (req, res, next) => {
 			const { id } = req.query;
 			if (id) {
 				return res.status(200).json({
-					warehouse: await handler.getWarehouses({
+					warehouse: (await handler.getWarehouses({
 						joinTableAttributes: [],
 						include: includeOptions,
 						where: { id },
 						attributes: { exclude: ['managerId'] }
-					})
+					}))[0] || null
 				});
 			}
 			return res.status(200).json({
