@@ -85,6 +85,17 @@ exports.myWarehouse = catchAsyncError(async (req, res, next) => {
 
 	switch (handler.userRole.role) {
 		case "controller":
+			const { id } = req.query;
+			if (id) {
+				return res.status(200).json({
+					warehouse: await handler.getWarehouses({
+						joinTableAttributes: [],
+						include: includeOptions,
+						where: { id },
+						attributes: { exclude: ['managerId'] }
+					})
+				});
+			}
 			return res.status(200).json({
 				warehouses:
 					await handler.getWarehouses({
