@@ -143,7 +143,7 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
   const year = parseInt(req.query.year);
   const month = parseInt(req.query.month) - 1;
   const date = req.query.date;
-
+  let template = "template.html";
   if (year) {
     var title = `Yearly Report - ${year}`;
     var startDate = new Date(Date.UTC(year, 0, 1));
@@ -157,6 +157,7 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
     var endDate = new Date(Date.UTC(currentYear, month + 1, 1));
   }
   else if (date) {
+    template = "daily.html";
     var title = "Daily Report";
     var startDate = new Date(date);
     startDate.setUTCHours(0, 0, 0, 0);
@@ -176,7 +177,7 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
   }
 
   console.log("download report", req.query);
-  await sendReport("template.html", { heading: title, arrivedOrders, transOrders, exitOrders }, res);
+  await sendReport(template, { heading: title, arrivedOrders, transOrders, exitOrders }, res);
 });
 
 exports.trackOrder = catchAsyncError(async (req, res, next) => {
@@ -299,7 +300,13 @@ exports.bondReport = catchAsyncError(async (req, res, next) => {
       where: { warehouseId: id },
       attributes: ["quantity_decl"],
     }],
-    where: { status: 'paid' }
+    where: {
+      updatedAt: {
+        [Op.gte]: startDate,
+        [Op.lt]: endDate,
+      },
+      status: 'paid'
+    }
   });
 
   transactions.forEach(transaction => {

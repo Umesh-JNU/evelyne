@@ -33,10 +33,16 @@ const includeOptions = {
 
 exports.createTransaction = catchAsyncError(async (req, res, next) => {
 	console.log("create transaction", req.body);
-	const { orderId, comments } = req.body;
+	const { orderId, comments, warehouseId } = req.body;
 
-	const order = await orderModel.findByPk(orderId);
-	if (!order) return next(new ErrorHandler("Order not found.", 404));
+	if (orderId) {
+		const order = await orderModel.findByPk(orderId);
+		if (!order) return next(new ErrorHandler("Order not found.", 404));
+	}
+	else if (warehouseId) {
+		const warehouse = await warehouseModel.findByPk(warehouseId);
+		if (!warehouse) return next(new ErrorHandler("Warehouse not found.", 404));
+	}
 
 	let transaction = await transactionModel.create(req.body);
 
