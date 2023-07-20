@@ -78,7 +78,7 @@ exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 			var { counts, total: orderCount } = await orderModel.getCounts(query.where);
 			var orders = await orderModel.findAll({
 				where: { ...query.where },
-				include: includeOptions(false),
+				include: includeOptions(),
 				attributes: { exclude: ["warehouseId", "userId"] },
 				order: [['createdAt', 'DESC']]
 			});
@@ -308,9 +308,6 @@ exports.addOrderItem = catchAsyncError(async (req, res, next) => {
 	const { id } = req.params;
 	const { items } = req.body;
 
-	if (!items || items.length === 0) {
-
-	}
 	items.forEach(item => { item.orderId = id; });
 	console.log(items);
 	const added_items = await orderItemModel.bulkCreate(items);

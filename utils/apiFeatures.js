@@ -8,7 +8,7 @@ module.exports = (key, requestQuery) => {
      * requestQuery: requestQuery passed in api url
      */
   }
-  const { keyword, resultPerPage, currentPage, orderId, role } = requestQuery;
+  const { keyword, resultPerPage, currentPage, orderId, role, unassigned } = requestQuery;
   console.log(keyword, resultPerPage, currentPage);
   let query = { where: {} };
   if (keyword) {
@@ -22,6 +22,13 @@ module.exports = (key, requestQuery) => {
       ...query.where,
       [key]: parseInt(orderId)
     };
+  }
+  if(unassigned) {
+    console.log({unassigned})
+    query.where = {
+      ...query.where,
+      [unassigned]: null
+    }
   }
   console.log(JSON.stringify(query));
 

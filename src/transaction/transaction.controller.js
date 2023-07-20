@@ -25,9 +25,13 @@ const includeOptions = {
 			}]
 		}],
 		attributes: ["id", "status"]
+	}, {
+		model: warehouseModel,
+		as: "warehouse",
+		attributes: ["id", "name"]
 	}],
 	attributes: {
-		exclude: ["orderId",]
+		exclude: ["orderId","warehouseId"]
 	}
 }
 
