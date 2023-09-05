@@ -1,6 +1,7 @@
 const ErrorHandler = require("../../utils/errorHandler")
 const catchAsyncError = require("../../utils/catchAsyncError")
 const getFormattedQuery = require("../../utils/apiFeatures");
+const { db } = require("../../config/database");
 const { orderModel, orderItemModel, includeCountAttr } = require("./order.model");
 const warehouseModel = require("../warehouse/warehouse.model");
 const { userModel } = require("../user/user.model");
@@ -23,7 +24,6 @@ const includeUser = {
 	as: "user",
 	attributes: ["id", "fullname", "avatar"],
 };
-
 const includeTransaction = {
 	model: transactionModel,
 	as: "transaction",
@@ -38,7 +38,7 @@ const includeOptions = (isIncludeTrans = true) => {
 
 exports.createOrder = catchAsyncError(async (req, res, next) => {
 	console.log("create Order", req.body);
-	const { warehouse, user, items } = req.body;
+	const { warehouse, user, items, parentId } = req.body;
 
 	if (!items || items.length === 0) return next(new ErrorHandler("Please provide at least one product.", 400));
 
@@ -48,23 +48,63 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 	const user_ = await userModel.findByPk(user);
 	if (!user_) return next(new ErrorHandler("User not found.", 404));
 
-	let order = await orderModel.create(req.body);
+	let transaction;
 
-	items.forEach(item => { item.orderId = order.id; });
-	console.log(items);
-	await orderItemModel.bulkCreate(items);
+	try {
+		// start
+		transaction = await db.transaction();
 
-	await warehouse_.addOrder(order);
-	await user_.addOrder(order);
+		let order = await orderModel.create(req.body, { transaction });
 
-	order = await orderModel.findByPk(order.id, {
-		include: includeOptions(false),
-		attributes: {
-			exclude: ["warehouseId", "userId"]
+		if (parentId) {
+			for (let i = 0; i < items.length; i++) {
+				const { id, keep, out, name } = items[i];
+				console.log({ i: items[i], id, keep, out, name })
+				if (keep === 0) {
+					const isDeleted = await orderItemModel.destroy({ where: { [Op.and]: { orderId: parentId, id } } }, { transaction });
+					if(!isDeleted) {
+						await transaction.rollback();
+						return next(new ErrorHandler("Bad Request", 400));
+					}
+					console.log({ isDeleted });
+				} else {
+					const [isUpdated] = await orderItemModel.update({ quantity: keep }, {
+						where: { [Op.and]: { orderId: parentId, id } }
+					}, { transaction });
+
+					if(!isUpdated) {
+						await transaction.rollback();
+						return next(new ErrorHandler("Bad Request", 400));
+					}
+				}
+
+				await orderItemModel.create({ name, quantity: out, orderId: order.id }, { transaction });
+			}
+		} else {
+			items.forEach((item) => { item.orderId = order.id; });
+			await orderItemModel.bulkCreate(items, { transaction });
 		}
-	})
-	res.status(201).json({ order });
-})
+
+		await warehouse_.addOrder(order, { transaction });
+		await user_.addOrder(order, { transaction });
+
+		// Commit the transaction
+		await transaction.commit();
+
+		order = await orderModel.findByPk(order.id, {
+			include: includeOptions(false),
+			attributes: {
+				exclude: ["warehouseId", "userId"],
+			},
+		});
+
+		res.status(201).json({ order });
+	} catch (error) {
+		// Rollback the transaction if an error occurs
+		if (transaction) await transaction.rollback();
+		return next(new ErrorHandler(error.message, 500));
+	}
+});
 
 exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 	console.log(req.query);
@@ -132,6 +172,9 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 		});
 	}
 
+	if (!order) {
+		return next(new ErrorHandler("Order Not Found", 404));
+	}
 	res.status(200).json({ order });
 })
 

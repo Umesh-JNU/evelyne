@@ -96,6 +96,9 @@ exports.updatePassword = catchAsyncError(async (req, res, next) => {
 
   const user = await userModel.findOne({ where: { id: userId } });
 
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
   user.password = password;
   await user.save();
 
@@ -104,6 +107,9 @@ exports.updatePassword = catchAsyncError(async (req, res, next) => {
 
 exports.forgotPassword = catchAsyncError(async (req, res, next) => {
   console.log("forgot password", req.body.email);
+  if (!req.body.email) {
+    return next(new ErrorHandler("Please provide a valid email.", 400));
+  }
 
   const user = await userModel.findOne({ where: { email: req.body.email } });
   if (!user) {
@@ -139,10 +145,17 @@ exports.forgotPassword = catchAsyncError(async (req, res, next) => {
 
 exports.verifyOTP = catchAsyncError(async (req, res, next) => {
   const { otp } = req.body;
-
+  if (!otp) {
+    return next(new ErrorHandler("Missing OTP", 400));
+  }
   const otpInstance = await otpModel.findOne({ where: { otp } });
-  if (!otpInstance || !otpInstance.isValid())
+
+  if (!otpInstance || !otpInstance.isValid()) {
+    if (otpInstance) {
+      await otpModel.destroy({ where: { id: otpInstance.id } });
+    }
     return next(new ErrorHandler("OTP is invalid or has been expired.", 400));
+  }
 
   await otpModel.destroy({ where: { id: otpInstance.id } });
 

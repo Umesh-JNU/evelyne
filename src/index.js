@@ -172,11 +172,11 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "desc_product": "desc_product",
 //       "unit": "Kg",
 //       "comment": "comment",
-//       "name_counter": "name_counter",
-//       "counter_valid": false,
-//       "manager_valid": false,
+//       // "name_counter": "name_counter",
+//       // "counter_valid": false,
+//       // "manager_valid": false,
 //       "customs": "customs",
-//       "client_valid": false,
+//       // "client_valid": false,
 //       "userId": 3,
 //       "warehouseId": 1
 //     },
@@ -196,11 +196,11 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "desc_product": "desc_product",
 //       "unit": "23",
 //       "comment": "comment",
-//       "name_counter": "name_counter",
-//       "counter_valid": false,
-//       "manager_valid": false,
+//       // "name_counter": "name_counter",
+//       // "counter_valid": false,
+//       // "manager_valid": false,
 //       "customs": "customs",
-//       "client_valid": false,
+//       // "client_valid": false,
 //       "userId": 3,
 //       "warehouseId": 1
 //     },
@@ -220,11 +220,11 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "desc_product": "desc_product",
 //       "unit": "Kg",
 //       "comment": "comment",
-//       "name_counter": "name_counter",
-//       "counter_valid": false,
-//       "manager_valid": false,
+//       // "name_counter": "name_counter",
+//       // "counter_valid": false,
+//       // "manager_valid": false,
 //       "customs": "customs",
-//       "client_valid": false,
+//       // "client_valid": false,
 //       "userId": 5,
 //       "warehouseId": 1
 //     },
@@ -244,27 +244,27 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "desc_product": "",
 //       "unit": "",
 //       "comment": "",
-//       "name_counter": "",
-//       "counter_valid": false,
-//       "manager_valid": false,
+//       // "name_counter": "",
+//       // "counter_valid": false,
+//       // "manager_valid": false,
 //       "customs": "",
-//       "client_valid": false,
+//       // "client_valid": false,
 //       "userId": 3,
 //       "warehouseId": 1
 //     }
 //   ]);
 
 //   await orderItemModel.bulkCreate([
-//     {
-//       "name": "rice",
-//       "quantity": "5400",
-//       "orderId": 1
-//     },
-//     {
-//       "name": "bags",
-//       "quantity": "100",
-//       "orderId": 1
-//     },
+    // {
+    //   "name": "rice",
+    //   "quantity": "5400",
+    //   "orderId": 1
+    // },
+    // {
+    //   "name": "bags",
+    //   "quantity": "100",
+    //   "orderId": 1
+    // },
 //     {
 //       "name": "rice",
 //       "quantity": "5400",

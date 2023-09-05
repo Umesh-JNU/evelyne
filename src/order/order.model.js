@@ -57,6 +57,9 @@ const orderModel = db.define("Order", {
   arrival_date: {
     type: DataTypes.DATE,
   },
+  inbound_date: {
+    type: DataTypes.DATE,
+  },
   trans_date: {
     type: DataTypes.DATE
   },
@@ -95,9 +98,9 @@ const orderModel = db.define("Order", {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  // name_manager: {
-  //   type: DataTypes.STRING
-  // },
+  name_manager: {
+    type: DataTypes.STRING
+  },
   manager_valid: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
@@ -111,9 +114,13 @@ const orderModel = db.define("Order", {
     defaultValue: false,
   },
   status: {
-    type: DataTypes.ENUM("arrived", "out-bound", "in-bound"),
+    type: DataTypes.ENUM("arrived", "out-bound", "in-bound", "in-tranship", "out-tranship", "exit"),
     defaultValue: "arrived",
   },
+  parentId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  }
 }, { timestamps: true });
 
 const includeCountAttr = [
