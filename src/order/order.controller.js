@@ -36,6 +36,23 @@ const includeOptions = (isIncludeTrans = true) => {
 	return [includeItems, includeUser, includeWarehouse];
 }
 
+const generateNotification = async (userNotiText, managerNotiText, order, managerId) => {
+	// for user
+	await notificationModel.create({
+		text: userNotiText,
+		userId: order.userId,
+		orderId: order.id
+	});
+
+	// for manager
+	await notificationModel.create({
+		text: managerNotiText,
+		userId: managerId,
+		orderId: order.id
+	});
+
+};
+
 exports.createOrder = catchAsyncError(async (req, res, next) => {
 	console.log("create Order", req.body);
 	const { warehouse, user, items, parentId } = req.body;
@@ -98,6 +115,14 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 			},
 		});
 
+		// generate notice for partial out-bound
+		if (parentId) {
+			await generateNotification(
+				`Partial Out-Bound Order is created from order ${parentId} to order ${order.id}. Waiting for manager approval.`,
+				`Partial Out-Bound Order is created from order ${parentId} to order ${order.id}.`,
+				order,
+				req.userId)
+		}
 		res.status(201).json({ order });
 	} catch (error) {
 		// Rollback the transaction if an error occurs
@@ -169,9 +194,10 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 			}
 		});
 
-		var outBound = await orderModel.findAll({ 
-			where: { parentId: id }, 
-			attributes: ['id', 'createdAt'] });
+		var outBound = await orderModel.findAll({
+			where: { parentId: id },
+			attributes: ['id', 'createdAt']
+		});
 	}
 
 	if (!order) {
@@ -202,116 +228,53 @@ exports.deleteOrder = catchAsyncError(async (req, res, next) => {
 	res.status(200).json({ message: "Order Deleted Successfully.", isDeleted });
 })
 
-const saveTrackTime = (order, newStatus) => {
-	console.log({ order: order.toJSON(), newStatus })
-	switch (newStatus) {
-		case "in-bound":
-			order.arrival_date = new Date();
-			break;
-		case "out-bound":
-			order.trans_date = new Date();
-			break;
-		case "exit":
-			order.exit_date = new Date();
-			break;
-	}
-	console.log("afeter", { order: order.toJSON(), newStatus })
-};
-
-const generateNotification = async (userNotiText, managerNotiText, order, managerId) => {
-	// for user
-	await notificationModel.create({
-		text: userNotiText,
-		userId: order.userId,
-		orderId: order.id
-	});
-
-	// for manager
-	await notificationModel.create({
-		text: managerNotiText,
-		userId: managerId,
-		orderId: order.id
-	});
-
-};
 
 exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 	console.log("change status", req.body);
 	const { id } = req.params;
 	const userId = req.userId;
-	const { status, manager_valid } = req.body;
 
 	const texts = {
-		"arrived": `Order number ${id} Status updated from Arrived to In-bound`,
-		"in-bound": `Order number ${id} Status updated from In-bound to Out-bound`,
-		"out-bound": `Your order number ${id} is ready to dispatch. Soon this order will be dispatched.`
+		"arrived": `Order number ${id} Status updated from Arrived to In-bound.`,
+		"in-bound": `Order number ${id} Status updated from In-bound to Out-bound.`,
+		"out-bound": `Order number ${id} is approved for exit. Soon this order will be dispatched.`,
+		"in-tranship": `Order number ${id} is approved for transhipment.`
 	};
 
 	const order = await orderModel.findByPk(id);
 	if (!order) return next(new ErrorHandler("Order not found.", 404));
 
-	const currentStatus = order.status;
-	const newStatus = await order.nextStatus();
+	const curStatus = order.status;
+	const curDateTime = new Date();
+	switch (curStatus) {
+		case "arrived":
+			order.arrival_date = curDateTime;
+			order.status = "in-bound";
+			break;
 
-	console.log({ manager_valid, status, newStatus, currentStatus })
-	if (!newStatus) {
-		return next(new ErrorHandler("Bad Request", 400));
+		case "in-bound":
+			order.inbound_date = curDateTime;
+			order.status = "out-bound";
+			break;
+
+		case "out-bound":
+			order.exit_date = curDateTime;
+			order.status = "exit";
+			break;
+
+		case "in-tranship":
+			order.trans_date = curDateTime;
+			order.status = "out-tranship";
+			break;
+
+		default:
+			return next(new ErrorHandler("Bad Request", 400));
 	}
 
-	const userNotiText = texts[currentStatus];
-	var managerNotiText = newStatus === 'exit' ? `You have approved the order ${id} for exit.` : texts[currentStatus];
-
-	// CASE - when only order status is to be updated
-	if (status) {
-		/**
-		 * currentStatus - current status of the order
-		 * status - new order status from frontend
-		 * newStatus - new order status evaluated 
-		 * if both status and new status is not equal then there will be no status update
-		 */
-		if (status !== newStatus)
-			return next(new ErrorHandler(`Status can't be updated from ${currentStatus} to ${status}`, 400));
-
-		await generateNotification(userNotiText, managerNotiText, order, userId);
-		// other we update the status
-		order.status = newStatus;
-		saveTrackTime(order, newStatus);
-	}
-
-	// CASE - when manager is approving 
-	if (manager_valid) {
-		/**
-		 * We check the new status
-		 * if it is `exit` that means now manager has done all approval except for the last (for exit).
-		 * to approve this client_valid field must be true.
-		 */
-		if (newStatus === "exit") {
-			// either already approved
-			if (order.manager_valid)
-				return next(new ErrorHandler("Already approved.", 400));
-
-			// not approved then check client has approved or not
-			console.log(order.dataValues, order.client_valid, "client valid")
-			if (!order.client_valid)
-				return next(new ErrorHandler("Can't be approved as client hasn't approved.", 400));
-
-			// otherwise we update the manager_valid field to true and also create notifications.
-			saveTrackTime(order, newStatus);
-			order.manager_valid = true;
-		}
-		// if it is not exit we update the status
-		else {
-			saveTrackTime(order, newStatus);
-			order.status = newStatus;
-		}
-
-		await generateNotification(userNotiText, managerNotiText, order, userId);
-	}
-
-	// after everystep is okay we save the order.
+	await generateNotification(texts[curStatus], texts[curStatus], order, userId);
 	await order.save();
-
-	res.status(200).json({ message: managerNotiText });
+	
+	res.status(200).json({ message: texts[curStatus] });
 });
 
 exports.clientValidation = catchAsyncError(async (req, res, next) => {

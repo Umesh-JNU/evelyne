@@ -112,11 +112,6 @@ class Validate {
       );
       next();
     },
-    approve: async (req, res, next) => {
-      req.body = {};
-      req.body.manager_valid = true;
-      next();
-    },
     item: async (req, res, next) => {
       const { items } = req.body;
       if (!items) {

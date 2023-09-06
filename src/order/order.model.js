@@ -197,19 +197,6 @@ orderModel.getCounts = async function (query) {
 
   return { counts, total };
 }
-orderModel.prototype.nextStatus = async function () {
-  const currentStatus = this.status;
-  switch (currentStatus) {
-    case "arrived":
-      return "in-bound";
-    case "in-bound":
-      return "out-bound";
-    case "out-bound":
-      return "exit";
-    default:
-      return;
-  }
-};
 
 orderModel.hasMany(orderItemModel, { foreignKey: "orderId", as: "items" });
 orderItemModel.belongsTo(orderModel, { foreignKey: "orderId", as: "order" });

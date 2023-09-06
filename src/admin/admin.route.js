@@ -80,12 +80,12 @@ managerRoute.get("/warehouse/orders", auth, authManager, getWarehouseOrder);
 managerRoute.route("/order/:id")
   .get(auth, authManager, getOrder)
   .put(order.put, auth, authManager, updateOrder);
-managerRoute.post("/order/:id/items", order.item, auth, authManager, addOrderItem);
-managerRoute.route("/order/:id/item/:item")
-  .put(auth, order.itemObj, authManager, UpdateOrderItem)
-  .delete(auth, authManager, deleteOrderItem);
-managerRoute.put("/order/:id/update-status", order.updateStatus, auth, authManager, updateOrderStatus);
-managerRoute.put("/order/:id/approve", order.approve, auth, authManager, updateOrderStatus);
+// managerRoute.post("/order/:id/items", order.item, auth, authManager, addOrderItem);
+// managerRoute.route("/order/:id/item/:item")
+//   .put(auth, order.itemObj, authManager, UpdateOrderItem)
+//   .delete(auth, authManager, deleteOrderItem);
+// managerRoute.put("/order/:id/update-status", order.updateStatus, auth, authManager, updateOrderStatus);
+managerRoute.put("/order/:id/approve", auth, authManager, updateOrderStatus);
 managerRoute.get("/warehouse/transactions", auth, authManager, getWarehouseTransaction);
 managerRoute.get("/transaction/:id", auth, authManager, getTransaction);
 managerRoute.post("/transaction/:id/add-comment", auth, authManager, addComment);
