@@ -255,16 +255,16 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //   ]);
 
 //   await orderItemModel.bulkCreate([
-    // {
-    //   "name": "rice",
-    //   "quantity": "5400",
-    //   "orderId": 1
-    // },
-    // {
-    //   "name": "bags",
-    //   "quantity": "100",
-    //   "orderId": 1
-    // },
+//     {
+//       "name": "rice",
+//       "quantity": "5400",
+//       "orderId": 1
+//     },
+//     {
+//       "name": "bags",
+//       "quantity": "100",
+//       "orderId": 1
+//     },
 //     {
 //       "name": "rice",
 //       "quantity": "5400",

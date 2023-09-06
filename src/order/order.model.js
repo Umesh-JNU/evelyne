@@ -91,20 +91,20 @@ const orderModel = db.define("Order", {
   comment: {
     type: DataTypes.STRING
   },
-  name_counter: {
-    type: DataTypes.STRING
-  },
-  counter_valid: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  name_manager: {
-    type: DataTypes.STRING
-  },
-  manager_valid: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
+  // name_counter: {
+  //   type: DataTypes.STRING
+  // },
+  // counter_valid: {
+  //   type: DataTypes.BOOLEAN,
+  //   defaultValue: false,
+  // },
+  // name_manager: {
+  //   type: DataTypes.STRING
+  // },
+  // manager_valid: {
+  //   type: DataTypes.BOOLEAN,
+  //   defaultValue: false,
+  // },
   customs: {
     type: DataTypes.STRING
   },

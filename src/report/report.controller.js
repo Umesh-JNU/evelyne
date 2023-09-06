@@ -328,3 +328,47 @@ exports.bondReport = catchAsyncError(async (req, res, next) => {
 
   await sendReport('bondReport.html', { heading: 'Bond Report', data: transactionData }, res);
 })
+
+exports.getOrderPDF = catchAsyncError(async (req, res, next) => {
+  console.log({q: req.query})
+  const heading = {
+    'ARRIVAL': "Goods Arrival Notice",
+    'TRANSHIP': "Goods Transhipment Notice",
+    'EXIT': "Goods Exit Notice"
+  }[req.query.notice];
+  const { id } = req.params;
+  const userId = req.userId;
+
+  const order = await orderModel.findOne({
+    where: { id },
+    include: [{
+      model: orderItemModel,
+      as: "items",
+      attributes: ["id", "name", "quantity"],
+    },
+    {
+      model: warehouseModel,
+      as: "warehouse",
+      include: [{
+        model: userModel,
+        as: "manager",
+        where: {id: userId},
+        attributes: ["id", "fullname"]
+      }],
+      attributes: ["id", "name", "image"],
+    },
+    {
+      model: userModel,
+      as: "user",
+      attributes: ["id", "fullname"],
+    }],
+    attributes: {
+      include: includeCountAttr,
+      exclude: ["userId", "warehouseId"]
+    }
+  });
+
+  if (!order) return next(new ErrorHandler("Order not found", 404));
+
+  await sendReport('notice.html', { heading, order: formattedOrder(order.toJSON()) }, res);
+});
