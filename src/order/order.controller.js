@@ -62,7 +62,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 				console.log({ i: items[i], id, keep, out, name })
 				if (keep === 0) {
 					const isDeleted = await orderItemModel.destroy({ where: { [Op.and]: { orderId: parentId, id } } }, { transaction });
-					if(!isDeleted) {
+					if (!isDeleted) {
 						await transaction.rollback();
 						return next(new ErrorHandler("Bad Request", 400));
 					}
@@ -72,7 +72,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 						where: { [Op.and]: { orderId: parentId, id } }
 					}, { transaction });
 
-					if(!isUpdated) {
+					if (!isUpdated) {
 						await transaction.rollback();
 						return next(new ErrorHandler("Bad Request", 400));
 					}
@@ -153,9 +153,7 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 	const userId = req.userId;
 	const user = await userModel.getHandler(userId);
 
-	let options = includeOptions(false);
 	if (user.userRole.role === 'user') {
-		options = includeOptions();
 		var order = await orderModel.findOne({
 			where: { id, userId },
 			include: includeOptions(),
@@ -170,12 +168,16 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 				exclude: ["userId", "warehouseId"]
 			}
 		});
+
+		var outBound = await orderModel.findAll({ 
+			where: { parentId: id }, 
+			attributes: ['id', 'createdAt'] });
 	}
 
 	if (!order) {
 		return next(new ErrorHandler("Order Not Found", 404));
 	}
-	res.status(200).json({ order });
+	res.status(200).json({ order, outBound });
 })
 
 exports.updateOrder = catchAsyncError(async (req, res, next) => {

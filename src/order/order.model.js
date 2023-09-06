@@ -1,4 +1,4 @@
-const { DataTypes } = require("sequelize");
+const { DataTypes, where, Op } = require("sequelize");
 const { db } = require("../../config/database");
 
 const orderItemModel = db.define("OrderItem", {
@@ -147,7 +147,12 @@ orderModel.warehouseOrders = async function (warehouseId, status) {
   let whereQuery = { warehouseId };
   if (status) {
     whereQuery = { warehouseId, status };
-  };
+  } 
+  else {
+    whereQuery = {
+      warehouseId, status: ["in-bound", "out-bound", "out-tranship", "exit"] // exclude in-tranship and arrived
+    }
+  }
 
   return await orderModel.findAll({
     where: whereQuery,
@@ -174,6 +179,8 @@ orderModel.getCounts = async function (query) {
     arrived: 0,
     'out-bound': 0,
     'in-bound': 0,
+    'in-tranship': 0,
+    'out-tranship': 0
   };
 
   let total = 0;

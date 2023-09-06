@@ -8,8 +8,8 @@ const app = express();
 https://evelyne-api.adaptable.app/api/
 */}
 
-const path = "./config/config.env";
-// const path = "./config/local.env";
+// const path = "./config/config.env"
+const path = "./config/local.env";
 
 dotenv.config({ path });
 
