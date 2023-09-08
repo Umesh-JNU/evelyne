@@ -154,8 +154,9 @@ exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 			var { counts } = await orderModel.getCounts({ userId });
 			var orders = await orderModel.findAll({
 				where: { userId, ...query.where },
-				include: includeOptions(false),
-				attributes: { exclude: ["warehouseId", "userId"] },
+				include: [includeItems],
+				attributes: ["id", "status", "createdAt"],
+				// { exclude: ["warehouseId", "userId"] },
 				order: [['createdAt', 'DESC']]
 			});
 			console.log({ counts, orders });
@@ -193,16 +194,17 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 				exclude: ["userId", "warehouseId"]
 			}
 		});
-
-		var outBound = await orderModel.findAll({
-			where: { parentId: id },
-			attributes: ['id', 'createdAt']
-		});
 	}
-
+	
 	if (!order) {
 		return next(new ErrorHandler("Order Not Found", 404));
 	}
+
+	const outBound = await orderModel.findAll({
+		where: { parentId: id },
+		attributes: ['id', 'createdAt']
+	});
+
 	res.status(200).json({ order, outBound });
 })
 
@@ -258,6 +260,9 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 			break;
 
 		case "out-bound":
+			// if(!order.parentId && !order.client_valid) {
+			// 	return next(new ErrorHandler("Can't be approved as client's validation is pending. Please wait.", 400));
+			// }
 			order.exit_date = curDateTime;
 			order.status = "exit";
 			break;
@@ -277,39 +282,39 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 	res.status(200).json({ message: texts[curStatus] });
 });
 
-exports.clientValidation = catchAsyncError(async (req, res, next) => {
-	const { id } = req.params;
-	const userId = req.userId;
+// exports.clientValidation = catchAsyncError(async (req, res, next) => {
+// 	const { id } = req.params;
+// 	const userId = req.userId;
 
-	const order = await orderModel.findOne({
-		where: { userId, id },
-		include: [{
-			model: warehouseModel,
-			as: "warehouse",
-			include: [{
-				model: userModel,
-				as: "manager",
-			}]
-		}]
-	});
-	if (!order) return next(new ErrorHandler("Order not found."));
+// 	const order = await orderModel.findOne({
+// 		where: { userId, id },
+// 		include: [{
+// 			model: warehouseModel,
+// 			as: "warehouse",
+// 			include: [{
+// 				model: userModel,
+// 				as: "manager",
+// 			}]
+// 		}]
+// 	});
+// 	if (!order) return next(new ErrorHandler("Order not found."));
 
-	if (order.client_valid)
-		return next(new ErrorHandler("Already Approved.", 400));
+// 	if (order.client_valid)
+// 		return next(new ErrorHandler("Already Approved.", 400));
 
-	console.log({ order })
-	order.client_valid = true;
-	await order.save();
+// 	console.log({ order })
+// 	order.client_valid = true;
+// 	await order.save();
 
-	await generateNotification(
-		`You have approved for the exit of order ${id}`,
-		`Client has approved for the exit of  order ${id}`,
-		order,
-		order.warehouse?.manager?.id
-	);
+// 	await generateNotification(
+// 		`You have approved for the exit of order ${id}`,
+// 		`Client has approved for the exit of  order ${id}`,
+// 		order,
+// 		order.warehouse?.manager?.id
+// 	);
 
-	res.status(200).json({ message: `You have approve order ${id} for exit from warehouse.` });
-});
+// 	res.status(200).json({ message: `You have approve order ${id} for exit from warehouse.` });
+// });
 
 exports.addOrderItem = catchAsyncError(async (req, res, next) => {
 	console.log("add order item", req.body);
