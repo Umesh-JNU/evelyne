@@ -150,7 +150,7 @@ orderModel.warehouseOrders = async function (warehouseId, status) {
   } 
   else {
     whereQuery = {
-      warehouseId, status: ["in-bound", "out-bound", "out-tranship", "exit"] // exclude in-tranship and arrived
+      warehouseId, status: ["in-bound", "out-tranship", "exit"] // exclude in-tranship and arrived
     }
   }
 
