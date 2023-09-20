@@ -275,10 +275,10 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 			order.status = "in-bound";
 			break;
 
-		// case "in-bound":
-		// 	order.inbound_date = curDateTime;
-		// 	order.status = "out-bound";
-		// 	break;
+		case "in-bound":
+			order.inbound_date = curDateTime;
+			order.status = "out-bound";
+			break;
 
 		case "out-bound":
 			// if(!order.parentId && !order.client_valid) {
@@ -297,9 +297,10 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 			return next(new ErrorHandler("Bad Request", 400));
 	}
 
-	await generateNotification(texts[curStatus], texts[curStatus], order, userId);
-	await order.save();
-
+	if (curStatus !== "in-bound") {
+		await generateNotification(texts[curStatus], texts[curStatus], order, userId);
+		await order.save();
+	}
 	res.status(200).json({ message: texts[curStatus] });
 });
 

@@ -147,7 +147,7 @@ orderModel.warehouseOrders = async function (warehouseId, status) {
   let whereQuery = { warehouseId };
   if (status) {
     whereQuery = { warehouseId, status };
-  } 
+  }
   else {
     whereQuery = {
       warehouseId, status: ["in-bound", "out-tranship", "exit"] // exclude in-tranship and arrived
@@ -180,7 +180,8 @@ orderModel.getCounts = async function (query) {
     'out-bound': 0,
     'in-bound': 0,
     'in-tranship': 0,
-    'out-tranship': 0
+    'out-tranship': 0,
+    exit: 0,
   };
 
   let total = 0;
@@ -195,7 +196,15 @@ orderModel.getCounts = async function (query) {
   }
   console.log({ counts });
 
-  return { counts, total };
+  return {
+    counts: {
+      arrived: counts.arrived,
+      'out-bound': counts["out-bound"],
+      'in-bound': counts["in-bound"],
+      'tranship': counts["in-tranship"] + counts["out-tranship"],
+      exit: counts.exit,
+    }, total
+  };
 }
 
 orderModel.hasMany(orderItemModel, { foreignKey: "orderId", as: "items" });
