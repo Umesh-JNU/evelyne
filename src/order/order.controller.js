@@ -116,13 +116,13 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 		});
 
 		// generate notice for partial out-bound
-		if (parentId) {
-			await generateNotification(
-				`Partial Out-Bound Order is created from order ${parentId} to order ${order.id}. Waiting for manager approval.`,
-				`Partial Out-Bound Order is created from order ${parentId} to order ${order.id}.`,
-				order,
-				req.userId)
-		}
+		// if (parentId) {
+		// 	await generateNotification(
+		// 		`Partial Out-Bound Order is created from order ${parentId} to order ${order.id}. Waiting for manager approval.`,
+		// 		`Partial Out-Bound Order is created from order ${parentId} to order ${order.id}.`,
+		// 		order,
+		// 		req.userId)
+		// }
 		res.status(201).json({ order });
 	} catch (error) {
 		// Rollback the transaction if an error occurs
@@ -153,7 +153,7 @@ exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 			console.log("in user");
 			var { counts } = await orderModel.getCounts({ userId });
 			var orders = await orderModel.findAll({
-				where: { userId, ...query.where },
+				where: { userId, ...query.where, status: { [Op.ne]: "out-bound" } },
 				include: [includeItems],
 				attributes: ["id", "status", "createdAt"],
 				// { exclude: ["warehouseId", "userId"] },
@@ -186,6 +186,26 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 			attributes: { exclude: ["userId", "warehouseId"] }
 		});
 	}
+	else if (user.userRole.role === 'controller') {
+		var order = await orderModel.findByPk(id, {
+			include: [
+				includeItems,
+				includeUser, {
+					model: warehouseModel,
+					as: "warehouse",
+					attributes: ["id", "name", "image"],
+					include: {
+						model: userModel,
+						as: 'manager',
+						attributes: ['id', 'fullname']
+					}
+				}],
+			attributes: {
+				include: includeCountAttr,
+				exclude: ["userId", "warehouseId"]
+			}
+		});
+	}
 	else {
 		var order = await orderModel.findByPk(id, {
 			include: includeOptions(false),
@@ -195,13 +215,14 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 			}
 		});
 	}
-	
+
 	if (!order) {
 		return next(new ErrorHandler("Order Not Found", 404));
 	}
 
 	const outBound = await orderModel.findAll({
 		where: { parentId: id },
+		include: [includeItems],
 		attributes: ['id', 'createdAt']
 	});
 
@@ -254,10 +275,10 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 			order.status = "in-bound";
 			break;
 
-		case "in-bound":
-			order.inbound_date = curDateTime;
-			order.status = "out-bound";
-			break;
+		// case "in-bound":
+		// 	order.inbound_date = curDateTime;
+		// 	order.status = "out-bound";
+		// 	break;
 
 		case "out-bound":
 			// if(!order.parentId && !order.client_valid) {
@@ -278,7 +299,7 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 
 	await generateNotification(texts[curStatus], texts[curStatus], order, userId);
 	await order.save();
-	
+
 	res.status(200).json({ message: texts[curStatus] });
 });
 

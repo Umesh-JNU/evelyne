@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    html {
+      zoom: 0.55;
+      padding: 0 1rem;
+    }
+
+    table,
+    tr,
+    td,
+    th,
+    tbody,
+    thead,
+    tfoot {
+      page-break-inside: avoid !important;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      padding: 1.5rem;
+    }
+
+    .details {
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td,
+    span {
+      padding: 8px;
+      font-size: 1.5rem;
+    }
+
+    .table td:first-child {
+      font-weight: bold;
+      width: 25%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1 style="text-align: center;">{{heading}}</h1>
+
+    <div class="details">
+      <table class="table">
+        <tbody>
+          <tr>
+            <td>Tin No.:</td>
+            <td>{{order.tin_no}}</td>
+          </tr>
+          <tr>
+            <td>Address:</td>
+            <td>{{order.address}}</td>
+          </tr>
+          <tr>
+            <td>Transit Company:</td>
+            <td>{{order.transit_company}}</td>
+          </tr>
+          <tr>
+            <td>Consignee:</td>
+            <td>{{order.consignee}}</td>
+          </tr>
+          <tr>
+            <td>Custom Agent:</td>
+            <td>{{order.custom_agent}}</td>
+          </tr>
+          <tr>
+            <td>DDCOM No.:</td>
+            <td>{{order.DDCOM_no}}</td>
+          </tr>
+          <tr>
+            <td>Quantity Declaration:</td>
+            <td>{{order.quantity_decl}}</td>
+          </tr>
+          <tr>
+            <td>Physical Quantity:</td>
+            <td>{{order.physical_quant}}</td>
+          </tr>
+          <tr>
+            <td>Exit Date:</td>
+            <td>{{order.exit_date}}</td>
+          </tr>
+          <tr>
+            <td>Last Storage Date:</td>
+            <td>{{order.last_storage_date}}</td>
+          </tr>
+          <tr>
+            <td>Truck No.:</td>
+            <td>{{order.truck_no}}</td>
+          </tr>
+          <tr>
+            <td>Container No.:</td>
+            <td>{{order.container}}</td>
+          </tr>
+          <tr>
+            <td>Transporter:</td>
+            <td>{{order.transporter}}</td>
+          </tr>
+          <tr>
+            <td>Ref No.:</td>
+            <td>{{order.ref_no}}</td>
+          </tr>
+          <tr>
+            <td>Description Product:</td>
+            <td>{{order.desc_product}}</td>
+          </tr>
+          <tr>
+            <td>Unit:</td>
+            <td>{{order.unit}}</td>
+          </tr>
+          <tr>
+            <td>Warehouse</td>
+            <td>{{order.warehouse.name}}</td>
+          </tr>
+          <tr>
+            <td>Comment:</td>
+            <td>{{order.comment}}</td>
+          </tr>
+          <tr>
+            <td>Name: Counter:</td>
+            <td>________________________</td>
+          </tr>
+          <tr>
+            <td>Validation of Counter:</td>
+            <td>________________________</td>
+          </tr>
+          <tr>
+            <td>Name of manager:</td>
+            <td>________________________</td>
+          </tr>
+          <tr>
+            <td>Validation of manager:</td>
+            <td>________________________</td>
+          </tr>
+          <tr>
+            <td>Customs:</td>
+            <td>{{order.customs}}</td>
+          </tr>
+          <tr>
+            <td>Client Name:</td>
+            <td>{{order.user.fullname}}</td>
+          </tr>
+          <tr>
+            <td>Validation of Client</td>
+            <td>________________________</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+
+</html>
