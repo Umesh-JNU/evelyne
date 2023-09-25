@@ -6,32 +6,57 @@ const { orderModel } = require("../order");
 const { userModel } = require("../user");
 const { warehouseModel } = require("../warehouse");
 
-const includeOptions = {
-	include: [{
-		model: orderModel,
-		as: "order",
+const includeWarehouse = {
+	model: warehouseModel,
+	as: "warehouse",
+	attributes: ["id", "name"]
+};
+
+const includeUser = {
+	model: userModel,
+	as: "user",
+	attributes: ["id", "fullname"]
+};
+
+const includeUserWarehouse = [
+	includeUser,
+	{
+		...includeWarehouse,
 		include: [{
 			model: userModel,
-			as: "user",
+			as: "manager",
 			attributes: ["id", "fullname"]
-		}, {
-			model: warehouseModel,
-			as: "warehouse",
-			attributes: ["id", "name"],
+		}]
+	}
+];
+
+const includeOptions = (userID) => {
+	if (userID) {
+		return {
 			include: [{
-				model: userModel,
-				as: "manager",
-				attributes: ["id", "fullname"]
-			}]
-		}],
-		attributes: ["id", "status"]
-	}, {
-		model: warehouseModel,
-		as: "warehouse",
-		attributes: ["id", "name"]
-	}],
-	attributes: {
-		exclude: ["orderId","warehouseId"]
+				model: orderModel,
+				as: "order",
+				where: { userId: userID },
+				include: includeUserWarehouse,
+				attributes: ["id", "status"]
+			}, includeWarehouse],
+			attributes: {
+				exclude: ["orderId", "warehouseId"]
+			}
+		}
+	}
+
+	return {
+		include: [
+			{
+				model: orderModel,
+				as: "order",
+				include: includeUserWarehouse,
+				attributes: ["id", "status"]
+			}, includeWarehouse],
+		attributes: {
+			exclude: ["orderId", "warehouseId"]
+		}
 	}
 }
 
@@ -56,7 +81,7 @@ exports.createTransaction = catchAsyncError(async (req, res, next) => {
 	}
 
 	transaction = await transactionModel.findByPk(transaction.id, {
-		...includeOptions
+		...includeOptions()
 	});
 
 	res.status(201).json({ transaction });
@@ -68,10 +93,10 @@ exports.getAllTransaction = catchAsyncError(async (req, res, next) => {
 
 	const user = req.user;
 	console.log({ user });
-	const options = { ...includeOptions };
+	let options = { ...includeOptions() };
 	if (!user || user?.userRole?.role === 'user') {
 		console.log(!user)
-		options.include[0].where = { userId: req.userId }
+		options = { ...includeOptions(req.userId) };
 	};
 
 	console.log(options.include[0])
@@ -87,9 +112,9 @@ exports.getTransaction = catchAsyncError(async (req, res, next) => {
 	const { id } = req.params;
 
 	const user = req.user;
-	const options = { ...includeOptions };
+	let options = { ...includeOptions() };
 	if (!user || user?.userRole?.role === 'user') {
-		options.include[0].where = { userId: req.userId }
+		options = { ...includeOptions(req.userId) }
 	};
 
 	const transaction = await transactionModel.findByPk(id, {
