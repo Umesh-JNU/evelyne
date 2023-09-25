@@ -299,8 +299,8 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 
 	if (curStatus !== "in-bound") {
 		await generateNotification(texts[curStatus], texts[curStatus], order, userId);
-		await order.save();
 	}
+	await order.save();
 	res.status(200).json({ message: texts[curStatus] });
 });
 

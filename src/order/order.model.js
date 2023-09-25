@@ -72,6 +72,9 @@ const orderModel = db.define("Order", {
   truck_no: {
     type: DataTypes.STRING
   },
+  truck_no_to: {
+    type: DataTypes.STRING
+  },
   container_no: {
     type: DataTypes.STRING
   },
@@ -198,11 +201,8 @@ orderModel.getCounts = async function (query) {
 
   return {
     counts: {
-      arrived: counts.arrived,
-      'out-bound': counts["out-bound"],
-      'in-bound': counts["in-bound"],
+      ...counts,
       'tranship': counts["in-tranship"] + counts["out-tranship"],
-      exit: counts.exit,
     }, total
   };
 }
