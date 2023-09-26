@@ -1,6 +1,10 @@
 const { DataTypes, where, Op } = require("sequelize");
 const { db } = require("../../config/database");
 
+const isDate = (date) => {
+  return ((date instanceof Date) && new Date(date) !== "Invalid Date") && !isNaN(new Date(date));
+}
+
 const orderItemModel = db.define("OrderItem", {
   name: {
     type: DataTypes.STRING,
@@ -56,18 +60,53 @@ const orderModel = db.define("Order", {
   },
   arrival_date: {
     type: DataTypes.DATE,
+    validate: {
+      isValidDate: function (value) {
+        if (!value || !isDate(value)) {
+          throw new Error('Empty or invalid exit date.');
+        }
+      }
+    }
   },
   inbound_date: {
     type: DataTypes.DATE,
+    validate: {
+      isValidDate: function (value) {
+        if (!value || !isDate(value)) {
+          throw new Error('Empty or invalid exit date.');
+        }
+      }
+    }
   },
   trans_date: {
-    type: DataTypes.DATE
+    type: DataTypes.DATE,
+    validate: {
+      isValidDate: function (value) {
+        if (!value || !isDate(value)) {
+          throw new Error('Empty or invalid exit date.');
+        }
+      }
+    }
   },
   exit_date: {
-    type: DataTypes.DATE
+    type: DataTypes.DATE,
+    validate: {
+      isValidDate: function (value) {
+        if (!value || !isDate(value)) {
+          throw new Error('Empty or invalid exit date.');
+        }
+      }
+    }
   },
   last_storage_date: {
-    type: DataTypes.DATE
+    type: DataTypes.DATE,
+    validate: {
+      isValidDate: function (value) {
+        if (!value || !isDate(value)) {
+          throw new Error('Empty or invalid exit date.');
+        }
+      }
+    }
   },
   truck_no: {
     type: DataTypes.STRING
