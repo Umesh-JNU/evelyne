@@ -55,7 +55,7 @@ const generateNotification = async (userNotiText, managerNotiText, order, manage
 
 exports.createOrder = catchAsyncError(async (req, res, next) => {
 	console.log("create Order", req.body);
-	const { warehouse, user, items, parentId } = req.body;
+	const { warehouse, user, items, parentId, orderType } = req.body;
 
 	if (!items || items.length === 0) return next(new ErrorHandler("Please provide at least one product.", 400));
 
@@ -65,13 +65,38 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 	const user_ = await userModel.findByPk(user);
 	if (!user_) return next(new ErrorHandler("User not found.", 404));
 
+	if (parentId) {
+		if (!req.body.exit_date) {
+			return next(new ErrorHandler("Exit Date is required.", 400));
+		}
+		var status = 'out-bound';
+	}
+	else {
+		switch (orderType) {
+			case 'arrival':
+				if (!req.body.arrival_date) {
+					return next(new ErrorHandler("Arrival Date is required.", 400));
+				}
+				var status = 'arrived'
+				break;
+			case 'tranship':
+				if (!req.body.trans_date) {
+					return next(new ErrorHandler("Tranship Date is required.", 400));
+				}
+				var status = 'in-tranship'
+				break;
+			default:
+				return next(new ErrorHandler("Bad Request", 400));
+		}
+	}
+
 	let transaction;
 
 	try {
 		// start
 		transaction = await db.transaction();
 
-		let order = await orderModel.create(req.body, { transaction });
+		let order = await orderModel.create({ ...req.body, status }, { transaction });
 
 		if (parentId) {
 			for (let i = 0; i < items.length; i++) {
@@ -220,13 +245,13 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 		return next(new ErrorHandler("Order Not Found", 404));
 	}
 
-	const outBound = await orderModel.findAll({
+	const history = await orderModel.findAll({
 		where: { parentId: id },
 		include: [includeItems],
-		attributes: ['id', 'createdAt']
+		attributes: ['id', 'arrival_date', 'exit_date', 'parentId', 'subOrderId']
 	});
 
-	res.status(200).json({ order, outBound });
+	res.status(200).json({ order, history });
 })
 
 exports.updateOrder = catchAsyncError(async (req, res, next) => {
@@ -376,13 +401,13 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 			const parentOrder = await orderModel.findByPk(order.parentId);
 			if (parentOrder.status === 'out-bound') {
 				parentOrder.status = 'exit';
-				parentOrder.exit_date = curDateTime;
+				// parentOrder.exit_date = curDateTime;
 				await parentOrder.save();
 
 				var msg = noticeText(order.parentId)[curStatus];
 				await generateNotification(msg, msg, order, userId);
 			}
-			order.exit_date = curDateTime;
+			// order.exit_date = curDateTime;
 			order.status = "exit";
 			await order.save();
 			break;

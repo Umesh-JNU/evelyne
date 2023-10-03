@@ -29,7 +29,7 @@ const options = {
     contents: {
       // first: 'Cover page',
       // 2: 'Second page', // Any page number is working. 1-based index
-      default: '<span style="color: #444; float: right; margin-top: 20px;">{{page}}</span>' // /<span>{{pages}}</span>', // fallback value
+      default: '<span style="color: #444; float: right;">{{page}}</span>' // /<span>{{pages}}</span>', // fallback value
       // last: 'Last Page'
     }
   },
@@ -285,7 +285,7 @@ exports.bondReport = catchAsyncError(async (req, res, next) => {
   transactions.forEach(transaction => {
     console.log({ transaction })
     transactionData.push({
-      date,
+      date: new Date(data).toISOString().slice(0, 10),
       declaration: transaction.desc,
       value: 0,
       debit: transaction.type === 'debit' ? transaction.amount : 0,
@@ -337,7 +337,7 @@ exports.getOrderPDF = catchAsyncError(async (req, res, next) => {
     'EXIT': "Goods Exit Notice"
   }[req.query.notice];
   const noticeSts = {
-    'ARRIVAL': "in-bound",
+    'ARRIVAL': "arrived",
     'TRANSHIP': "out-tranship",
     'EXIT': "exit"
   }[req.query.notice];

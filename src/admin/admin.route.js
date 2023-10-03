@@ -74,7 +74,7 @@ controllerRoute.get("/my-warehouses", auth, authController, myWarehouse);
 const managerRoute = express.Router();
 const authManager = authRole(["manager"]);
 
-managerRoute.get("/warehouse/goods-notices", auth, authManager, getAllOrder);
+// managerRoute.get("/warehouse/goods-notices", auth, authManager, getAllOrder);
 managerRoute.post("/order", order.post, auth, authManager, createOrder);
 managerRoute.get("/warehouse/orders", auth, authManager, getWarehouseOrder);
 managerRoute.route("/order/:id")

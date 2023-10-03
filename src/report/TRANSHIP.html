@@ -5,7 +5,6 @@
   <style>
     html {
       zoom: 0.55;
-      padding: 0 1rem;
     }
 
     table,
@@ -42,9 +41,25 @@
       font-size: 1.5rem;
     }
 
-    .table td:first-child {
-      font-weight: bold;
-      width: 25%;
+    th,
+    td {
+      width: 50%;
+      border: 1px solid rgb(209, 209, 209);
+      padding: 10px 2.5rem;
+    }
+
+    td {
+      border-left: none;
+    }
+
+    .table th {
+      text-align: left;
+      vertical-align: middle !important;
+      white-space: nowrap;
+    }
+
+    h1 {
+      text-align: center;
     }
   </style>
 </head>
@@ -57,108 +72,108 @@
       <table class="table">
         <tbody>
           <tr>
-            <td>Tin No.:</td>
+            <th>Tin No.</th>
             <td>{{order.tin_no}}</td>
           </tr>
           <tr>
-            <td>Address:</td>
+            <th>Address</th>
             <td>{{order.address}}</td>
           </tr>
           <tr>
-            <td>Transit Company:</td>
+            <th>Transit Company</th>
             <td>{{order.transit_company}}</td>
           </tr>
           <tr>
-            <td>Consignee:</td>
+            <th>Consignee</th>
             <td>{{order.consignee}}</td>
           </tr>
           <tr>
-            <td>Custom Agent:</td>
+            <th>Custom Agent</th>
             <td>{{order.custom_agent}}</td>
           </tr>
           <tr>
-            <td>DDCOM No.:</td>
+            <th>DDCOM No.</th>
             <td>{{order.DDCOM_no}}</td>
           </tr>
           <tr>
-            <td>Quantity Declaration:</td>
+            <th>Quantity Declaration</th>
             <td>{{order.quantity_decl}}</td>
           </tr>
           <tr>
-            <td>Physical Quantity:</td>
+            <th>Physical Quantity</th>
             <td>{{order.physical_quant}}</td>
           </tr>
           <tr>
-            <td>Transhipment Date:</td>
+            <th>Transhipment Date</th>
             <td>{{order.trans_date}}</td>
           </tr>
           <tr>
-            <td>Last Storage Date:</td>
+            <th>Last Storage Date</th>
             <td>{{order.last_storage_date}}</td>
           </tr>
           <tr>
-            <td>From Truck No.:</td>
+            <th>From Truck No.</th>
             <td>{{order.truck_no}}</td>
           </tr>
           <tr>
-            <td>To Truck No.:</td>
+            <th>To Truck No.</th>
             <td>{{order.truck_no_to}}</td>
           </tr>
           <tr>
-            <td>Container No.:</td>
+            <th>Container No.</th>
             <td>{{order.container_no}}</td>
           </tr>
           <tr>
-            <td>Transporter:</td>
+            <th>Transporter</th>
             <td>{{order.transporter}}</td>
           </tr>
           <tr>
-            <td>Ref No.:</td>
+            <th>Ref No.</th>
             <td>{{order.ref_no}}</td>
           </tr>
           <tr>
-            <td>Description Product:</td>
+            <th>Description Product</th>
             <td>{{order.desc_product}}</td>
           </tr>
           <tr>
-            <td>Unit:</td>
+            <th>Unit</th>
             <td>{{order.unit}}</td>
           </tr>
           <tr>
-            <td>Warehouse</td>
+            <th>Warehouse</th>
             <td>{{order.warehouse.name}}</td>
           </tr>
           <tr>
-            <td>Comment:</td>
+            <th>Comment</th>
             <td>{{order.comment}}</td>
           </tr>
           <tr>
-            <td>Name: Counter:</td>
-            <td>________________________</td>
+            <th>Name: Counter</th>
+            <td></td>
           </tr>
           <tr>
-            <td>Validation of Counter:</td>
-            <td>________________________</td>
+            <th>Validation of Counter</th>
+            <td></td>
           </tr>
           <tr>
-            <td>Name of manager:</td>
-            <td>________________________</td>
+            <th>Name of manager</th>
+            <td></td>
           </tr>
           <tr>
-            <td>Validation of manager:</td>
-            <td>________________________</td>
+            <th>Validation of manager</th>
+            <td></td>
           </tr>
           <tr>
-            <td>Customs:</td>
+            <th>Customs</th>
             <td>{{order.customs}}</td>
           </tr>
           <tr>
-            <td>Client Name:</td>
+            <th>Client Name</th>
             <td>{{order.user.fullname}}</td>
           </tr>
           <tr>
-            <td>Validation of Client</td>
-            <td>________________________</td>
+            <th>Validation of Client</th>
+            <td></td>
           </tr>
         </tbody>
       </table>
