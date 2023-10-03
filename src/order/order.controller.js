@@ -304,6 +304,106 @@ exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 	res.status(200).json({ message: texts[curStatus] });
 });
 
+
+const noticeText = (id) => {
+	return {
+		"arrived": `Order number ${id} Status updated from Arrived to In-bound.`,
+		"in-bound": `Order number ${id} Status updated from In-bound to Out-bound.`,
+		"out-bound": `Order number ${id} is approved for exit. Soon this order will be dispatched.`,
+		"in-tranship": `Order number ${id} is approved for transhipment.`
+	};
+};
+
+exports.approveOrder = catchAsyncError(async (req, res, next) => {
+	console.log("approve order", req.body);
+	const { id } = req.params;
+	const userId = req.userId;
+
+	const order = await orderModel.findByPk(id, { include: includeItems });
+	if (!order) return next(new ErrorHandler("Order not found.", 404));
+
+	const curStatus = order.status;
+	const curDateTime = new Date();
+	switch (curStatus) {
+		case "arrived":
+			console.log({ o: order.toJSON() })
+			const apprBody = order.toJSON();
+			["id", "createdAt", "updatedAt", "items", "parentId", "subOrderId"].forEach((k) => {
+				delete apprBody[k];
+			})
+			console.log({ apprBody, o: order.toJSON() });
+			const apprOrder = await orderModel.create({ ...apprBody, parentId: id });
+			const apprItems = [];
+			order.items.map(({ name, quantity }) => {
+				apprItems.push({ name, quantity, orderId: apprOrder.id });
+			});
+			await orderItemModel.bulkCreate(apprItems);
+
+			order.status = "in-bound";
+			await order.save();
+
+			var msg = noticeText(id)[curStatus];
+			await generateNotification(msg, msg, order, userId);
+			break;
+
+		case "in-bound":
+			const inboundBody = req.body;
+			console.log({ inboundBody });
+			const inBoundOrder = await orderModel.create({ ...inboundBody, status: "out-bound", parentId: id });
+			const inBoundItems = [];
+			order.items.map(({ name, quantity }) => {
+				inBoundItems.push({ name, quantity, orderId: inBoundOrder.id });
+			});
+			await orderItemModel.bulkCreate(inBoundItems);
+
+			order.status = "out-bound";
+			await order.save();
+
+			var msg = noticeText(id)[curStatus];
+			break;
+
+		case "out-bound":
+			// if(!order.parentId && !order.client_valid) {
+			// 	return next(new ErrorHandler("Can't be approved as client's validation is pending. Please wait.", 400));
+			// }
+
+			{/**
+				For out-bound, there will be two cases -
+				1. partial out-bound - only suborder status will change on approval. in this status of parent and suborder will be different.
+				2. complete out-bound - parent and suborder both status will change on approval
+			*/}
+
+			const parentOrder = await orderModel.findByPk(order.parentId);
+			if (parentOrder.status === 'out-bound') {
+				parentOrder.status = 'exit';
+				parentOrder.exit_date = curDateTime;
+				await parentOrder.save();
+
+				var msg = noticeText(order.parentId)[curStatus];
+				await generateNotification(msg, msg, order, userId);
+			}
+			order.exit_date = curDateTime;
+			order.status = "exit";
+			await order.save();
+			break;
+
+		case "in-tranship":
+			order.trans_date = curDateTime;
+			order.status = "out-tranship";
+			await order.save();
+
+			var msg = noticeText(id)[curStatus];
+			await generateNotification(msg, msg, order, userId);
+			break;
+
+		default:
+			return next(new ErrorHandler("Bad Request", 400));
+	}
+
+	await order.save();
+	res.status(200).json({ message: msg });
+});
+
 // exports.clientValidation = catchAsyncError(async (req, res, next) => {
 // 	const { id } = req.params;
 // 	const userId = req.userId;

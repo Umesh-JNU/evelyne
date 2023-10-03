@@ -8,7 +8,7 @@ const { createContent, updateContent, deleteContent } = require("../staticDetail
 
 const { createWarehouse, updateWarehouse, deleteWarehouse, myWarehouse, housesAndOrderCount, warehouseAndAllOrders, getWarehouseOrder, housesAndTransactionCount, getWarehouseTransaction, assignHandler, removeHandler } = require("../warehouse");
 
-const { createOrder, getAllOrder, getOrder, updateOrder, updateOrderStatus, deleteOrder, UpdateOrderItem, addOrderItem, deleteOrderItem } = require('../order');
+const { createOrder, getAllOrder, getOrder, updateOrder, updateOrderStatus, approveOrder, deleteOrder, UpdateOrderItem, addOrderItem, deleteOrderItem } = require('../order');
 
 const { createTransaction, getAllTransaction, getTransaction, updateTransaction, deleteTransaction, addComment } = require("../transaction");
 
@@ -85,7 +85,7 @@ managerRoute.route("/order/:id")
 //   .put(auth, order.itemObj, authManager, UpdateOrderItem)
 //   .delete(auth, authManager, deleteOrderItem);
 // managerRoute.put("/order/:id/update-status", order.updateStatus, auth, authManager, updateOrderStatus);
-managerRoute.put("/order/:id/approve", auth, authManager, updateOrderStatus);
+managerRoute.put("/order/:id/approve", auth, authManager, approveOrder);
 managerRoute.get("/warehouse/transactions", auth, authManager, getWarehouseTransaction);
 managerRoute.get("/transaction/:id", auth, authManager, getTransaction);
 managerRoute.post("/transaction/:id/add-comment", auth, authManager, addComment);

@@ -68,16 +68,16 @@ const orderModel = db.define("Order", {
       }
     }
   },
-  inbound_date: {
-    type: DataTypes.DATE,
-    validate: {
-      isValidDate: function (value) {
-        if (!value || !isDate(value)) {
-          throw new Error('Empty or invalid exit date.');
-        }
-      }
-    }
-  },
+  // inbound_date: {
+  //   type: DataTypes.DATE,
+  //   validate: {
+  //     isValidDate: function (value) {
+  //       if (!value || !isDate(value)) {
+  //         throw new Error('Empty or invalid exit date.');
+  //       }
+  //     }
+  //   }
+  // },
   trans_date: {
     type: DataTypes.DATE,
     validate: {
@@ -162,6 +162,9 @@ const orderModel = db.define("Order", {
   parentId: {
     type: DataTypes.INTEGER,
     allowNull: true
+  },
+  subOrderId: {
+    type: DataTypes.INTEGER
   }
 }, { timestamps: true });
 
@@ -184,6 +187,29 @@ const includeCountAttr = [
     'totalWeight'
   ]
 ];
+
+orderModel.addHook('beforeCreate', async (order, options) => {
+  if (order.parentId) {
+    const nextAutoIncrementValue = await getNextAutoIncrementValue(order.parentId);
+    console.log({ nextAutoIncrementValue })
+    order.subOrderId = nextAutoIncrementValue;
+  }
+});
+
+async function getNextAutoIncrementValue(parentId) {
+  // Query the database to find the next auto-incremented value for parentId
+  const result = await orderModel.findOne({
+    where: { parentId },
+    attributes: [
+      [db.fn('max', db.col('subOrderId')), 'max_auto_increment'],
+    ],
+  });
+
+  console.log({ result })
+  const maxAutoIncrement = result.get('max_auto_increment') || 0;
+  return maxAutoIncrement + 1;
+}
+
 
 orderModel.warehouseOrders = async function (warehouseId, status) {
   let whereQuery = { warehouseId };
