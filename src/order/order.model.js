@@ -220,7 +220,7 @@ orderModel.warehouseOrders = async function (warehouseId, status) {
       whereQuery = { warehouseId, status, parentId: null }
       break;
     case 'out-bound':
-      whereQuery = { warehouseId, status, parentId: { [Op.ne]: null } }
+      whereQuery = { warehouseId, [Op.not]: {parentId: null } }
       break;
     default:
       whereQuery = {
@@ -230,11 +230,11 @@ orderModel.warehouseOrders = async function (warehouseId, status) {
   }
 
   console.log({ whereQuery })
-  return await orderModel.findAll({
+  return await this.findAll({
     where: whereQuery,
     attributes: {
       include: includeCountAttr,
-      exclude: [...Object.keys(orderModel.rawAttributes).filter(attr => !["id", "status", "updatedAt"].includes(attr)), "userId", "warehouseId"]
+      exclude: [...Object.keys(this.rawAttributes).filter(attr => !["id", "status", "updatedAt"].includes(attr)), "userId", "warehouseId"]
     },
     order: [['createdAt', 'DESC']]
   })

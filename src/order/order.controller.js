@@ -372,9 +372,21 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 			break;
 
 		case "in-bound":
+			const { warehouse, user } = req.body;
+
+			const warehouse_ = await warehouseModel.findByPk(warehouse);
+			if (!warehouse_) return next(new ErrorHandler("No such warehouse exists.", 404));
+
+			const user_ = await userModel.findByPk(user);
+			if (!user_) return next(new ErrorHandler("User not found.", 404));
+
 			const inboundBody = req.body;
 			console.log({ inboundBody });
 			const inBoundOrder = await orderModel.create({ ...inboundBody, status: "out-bound", parentId: id });
+
+			await warehouse_.addOrder(inBoundOrder);
+			await user_.addOrder(inBoundOrder);
+
 			const inBoundItems = [];
 			order.items.map(({ name, quantity }) => {
 				inBoundItems.push({ name, quantity, orderId: inBoundOrder.id });
@@ -399,6 +411,9 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 			*/}
 
 			const parentOrder = await orderModel.findByPk(order.parentId);
+			if (!parentOrder) {
+				return next(new ErrorHandler("Bad Request", 400));
+			}
 			if (parentOrder.status === 'out-bound') {
 				parentOrder.status = 'exit';
 				// parentOrder.exit_date = curDateTime;

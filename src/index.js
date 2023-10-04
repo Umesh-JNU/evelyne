@@ -18,7 +18,7 @@ userModel.hasMany(orderModel, { foreignKey: "userId", as: "orders" });
 orderModel.belongsTo(userModel, { foreignKey: "userId", as: "user" });
 
 warehouseModel.hasMany(orderModel, { foreignKey: "warehouseId", as: "orders" });
-orderModel.belongsTo(warehouseModel, { foreignKey: "warehouseId", as: "warehouse" });
+orderModel.belongsTo(warehouseModel, { foreignKey: "warehouseId", as: "warehouse", allowNull: false });
 
 warehouseModel.hasMany(transactionModel, { foreignKey: "warehouseId", as: "transactions" });
 transactionModel.belongsTo(warehouseModel, { foreignKey: "warehouseId", as: "warehouse" });
