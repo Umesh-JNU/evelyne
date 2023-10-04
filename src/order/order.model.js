@@ -213,13 +213,18 @@ async function getNextAutoIncrementValue(parentId) {
 
 orderModel.warehouseOrders = async function (warehouseId, status) {
   let whereQuery = { warehouseId };
-  if (status) {
-    whereQuery = { warehouseId, status };
-  }
-  else {
-    whereQuery = {
-      warehouseId, status: ["in-bound", "out-tranship", "exit"] // exclude in-tranship and arrived
-    }
+  switch (status) {
+    case (status === 'arrived' || status === 'in-tranship'):
+      whereQuery = { warehouseId, status, parentId: null }
+      break;
+    case 'out-bound':
+      whereQuery = { warehouseId, status, parentId: { [Op.ne]: null } }
+      break;
+    default:
+      whereQuery = {
+        warehouseId, status: ["in-bound", "out-tranship", "exit"] // exclude in-tranship and arrived
+      }
+      break;
   }
 
   return await orderModel.findAll({
