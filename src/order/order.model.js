@@ -212,9 +212,11 @@ async function getNextAutoIncrementValue(parentId) {
 
 
 orderModel.warehouseOrders = async function (warehouseId, status) {
+  console.log({ warehouseId, status })
   let whereQuery = { warehouseId };
   switch (status) {
-    case (status === 'arrived' || status === 'in-tranship'):
+    case 'arrived':
+    case 'in-tranship':
       whereQuery = { warehouseId, status, parentId: null }
       break;
     case 'out-bound':
@@ -227,6 +229,7 @@ orderModel.warehouseOrders = async function (warehouseId, status) {
       break;
   }
 
+  console.log({ whereQuery })
   return await orderModel.findAll({
     where: whereQuery,
     attributes: {
@@ -273,6 +276,7 @@ orderModel.getCounts = async function (query) {
     counts: {
       ...counts,
       'tranship': counts["in-tranship"] + counts["out-tranship"],
+      'out-bound': await this.count({ where: { status: 'out-bound', parentId: { [Op.ne]: null } } })
     }, total
   };
 }
