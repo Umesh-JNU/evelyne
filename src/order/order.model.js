@@ -220,7 +220,7 @@ orderModel.warehouseOrders = async function (warehouseId, status) {
       whereQuery = { warehouseId, status, parentId: null }
       break;
     case 'out-bound':
-      whereQuery = { warehouseId, [Op.not]: {parentId: null } }
+      whereQuery = { warehouseId, status, [Op.not]: { parentId: null } }
       break;
     default:
       whereQuery = {

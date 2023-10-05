@@ -12,7 +12,7 @@ class Validate {
     }
 
     this.orderAttr = {
-      create: ["address", "items", "warehouse", "user"],
+      create: ["address", "items", "warehouse", "user", "orderType"],
       update: ["tin_no", "address", "transit_company", "consignee", "custom_agent", "DDCOM_no", "quantity_decl", "physical_quant", "arrival_date", "last_storage_date", "truck_no", "truck_no_to", "container_no", "transporter", "ref_no", "desc_product", "unit", "comment", "name_counter", "counter_valid", "customs", "client_valid"]
 
     }

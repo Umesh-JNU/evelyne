@@ -57,6 +57,15 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 	console.log("create Order", req.body);
 	const { warehouse, user, items, parentId, orderType } = req.body;
 
+	if (!parseInt(warehouse)) {
+		return next(new ErrorHandler("Invalid warehouse Id.", 400));
+	}
+	if (!parseInt(user)) {
+		return next(new ErrorHandler("Invalid user Id.", 400));
+	}
+	if (parentId && !parseInt(parentId)) {
+		return next(new ErrorHandler("Invalid parent order Id.", 400));
+	}
 	if (!items || items.length === 0) return next(new ErrorHandler("Please provide at least one product.", 400));
 
 	const warehouse_ = await warehouseModel.findByPk(warehouse);
@@ -72,6 +81,12 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 		transaction = await db.transaction();
 
 		if (parentId) {
+			const parentOrder = await orderModel.findOne({ where: { id: parentId, status: 'in-bound' } }, { include: includeItems });
+			if (!parentOrder) {
+				await transaction.rollback();
+				return next(new ErrorHandler("Bad Request. No Parent Order", 400));
+			}
+
 			if (!req.body.exit_date) {
 				return next(new ErrorHandler("Exit Date is required.", 400));
 			}
@@ -84,8 +99,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					// ------------ UPDATING PARENT ORDER START ------------------
 					const [updatedOrder] = await orderModel.update(
 						{ status: 'out-bound', exit_date: req.body.exit_date },
-						{ where: { id: parentId, status: 'in-bound' } },
-						{ transaction });
+						{ where: { id: parentId, status: 'in-bound' }, transaction });
 
 					if (!updatedOrder) {
 						await transaction.rollback();
@@ -100,19 +114,30 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					break;
 
 				case 'partial':
+					console.log("PARTIAL ORDER REQUEST")
 					// NOTHING TO DO WITH PARENT ORDER 
 					// ONLY UPDATE PARENT ORDER ITEMS AND CREATE ITEMS FOR SUB_ORDER
+					let keepCheck = true;
+					let outCheck = true;
 					for (let i = 0; i < items.length; i++) {
 						const { id, keep, out, name } = items[i];
+						const item = await orderItemModel.findOne({ where: { id, quantity: keep + out } });
+						if (!item) {
+							await transaction.rollback();
+							return next(new ErrorHandler("Bad Request.", 400));
+						}
+
 						console.log({ i: items[i], id, keep, out, name })
 						if (keep === 0) {
-							const isDeleted = await orderItemModel.destroy({ where: { [Op.and]: { orderId: parentId, id } } }, { transaction });
+							outCheck = false;
+							const isDeleted = await orderItemModel.destroy({ where: { [Op.and]: { orderId: parentId, id } }, transaction });
 							if (!isDeleted) {
 								await transaction.rollback();
 								return next(new ErrorHandler("Bad Request", 400));
 							}
 							console.log({ isDeleted });
 						} else {
+							keepCheck = false;
 							const [isUpdated] = await orderItemModel.update({ quantity: keep }, {
 								where: { [Op.and]: { orderId: parentId, id } }
 							}, { transaction });
@@ -124,6 +149,12 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 						}
 
 						await orderItemModel.create({ name, quantity: out, orderId: order.id }, { transaction });
+					}
+
+					console.log({ keepCheck, outCheck })
+					if (keepCheck || outCheck) {
+						await transaction.rollback();
+						return next(new ErrorHandler("Bad Request", 400));
 					}
 					break;
 
@@ -153,7 +184,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 			}
 
 			order = await orderModel.create({ ...req.body, status }, { transaction });
-			
+
 			items.forEach((item) => { item.orderId = order.id; });
 			await orderItemModel.bulkCreate(items, { transaction });
 		}
