@@ -65,64 +65,95 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 	const user_ = await userModel.findByPk(user);
 	if (!user_) return next(new ErrorHandler("User not found.", 404));
 
-	if (parentId) {
-		if (!req.body.exit_date) {
-			return next(new ErrorHandler("Exit Date is required.", 400));
-		}
-		var status = 'out-bound';
-	}
-	else {
-		switch (orderType) {
-			case 'arrival':
-				if (!req.body.arrival_date) {
-					return next(new ErrorHandler("Arrival Date is required.", 400));
-				}
-				var status = 'arrived'
-				break;
-			case 'tranship':
-				if (!req.body.trans_date) {
-					return next(new ErrorHandler("Tranship Date is required.", 400));
-				}
-				var status = 'in-tranship'
-				break;
-			default:
-				return next(new ErrorHandler("Bad Request", 400));
-		}
-	}
-
-	let transaction;
+	let transaction, order;
 
 	try {
 		// start
 		transaction = await db.transaction();
 
-		let order = await orderModel.create({ ...req.body, status }, { transaction });
-
 		if (parentId) {
-			for (let i = 0; i < items.length; i++) {
-				const { id, keep, out, name } = items[i];
-				console.log({ i: items[i], id, keep, out, name })
-				if (keep === 0) {
-					const isDeleted = await orderItemModel.destroy({ where: { [Op.and]: { orderId: parentId, id } } }, { transaction });
-					if (!isDeleted) {
-						await transaction.rollback();
-						return next(new ErrorHandler("Bad Request", 400));
-					}
-					console.log({ isDeleted });
-				} else {
-					const [isUpdated] = await orderItemModel.update({ quantity: keep }, {
-						where: { [Op.and]: { orderId: parentId, id } }
-					}, { transaction });
-
-					if (!isUpdated) {
-						await transaction.rollback();
-						return next(new ErrorHandler("Bad Request", 400));
-					}
-				}
-
-				await orderItemModel.create({ name, quantity: out, orderId: order.id }, { transaction });
+			if (!req.body.exit_date) {
+				return next(new ErrorHandler("Exit Date is required.", 400));
 			}
-		} else {
+
+			// CREATED SUB_ORDER 
+			order = await orderModel.create({ ...req.body, status: 'out-bound', }, { transaction });
+
+			switch (orderType) {
+				case 'complete':
+					// ------------ UPDATING PARENT ORDER START ------------------
+					const [updatedOrder] = await orderModel.update(
+						{ status: 'out-bound', exit_date: req.body.exit_date },
+						{ where: { id: parentId, status: 'in-bound' } },
+						{ transaction });
+
+					if (!updatedOrder) {
+						await transaction.rollback();
+						return next(new ErrorHandler("Bad Request", 400));
+					}
+					// ------------ UPDATING PARENT ORDER END --------------------
+
+					// ------------ CREATING SUB ORDER IIEMS START ---------------------
+					items.forEach((item) => { item.orderId = order.id; });
+					await orderItemModel.bulkCreate(items, { transaction });
+					// ------------ CREATING SUB ORDER IIEMS END -----------------------
+					break;
+
+				case 'partial':
+					// NOTHING TO DO WITH PARENT ORDER 
+					// ONLY UPDATE PARENT ORDER ITEMS AND CREATE ITEMS FOR SUB_ORDER
+					for (let i = 0; i < items.length; i++) {
+						const { id, keep, out, name } = items[i];
+						console.log({ i: items[i], id, keep, out, name })
+						if (keep === 0) {
+							const isDeleted = await orderItemModel.destroy({ where: { [Op.and]: { orderId: parentId, id } } }, { transaction });
+							if (!isDeleted) {
+								await transaction.rollback();
+								return next(new ErrorHandler("Bad Request", 400));
+							}
+							console.log({ isDeleted });
+						} else {
+							const [isUpdated] = await orderItemModel.update({ quantity: keep }, {
+								where: { [Op.and]: { orderId: parentId, id } }
+							}, { transaction });
+
+							if (!isUpdated) {
+								await transaction.rollback();
+								return next(new ErrorHandler("Bad Request", 400));
+							}
+						}
+
+						await orderItemModel.create({ name, quantity: out, orderId: order.id }, { transaction });
+					}
+					break;
+
+				default:
+					await transaction.rollback();
+					return next(new ErrorHandler("Bad Request", 400));
+			}
+		}
+		else {
+			switch (orderType) {
+				case 'arrival':
+					if (!req.body.arrival_date) {
+						return next(new ErrorHandler("Arrival Date is required.", 400));
+					}
+					var status = 'arrived'
+					break;
+
+				case 'tranship':
+					if (!req.body.trans_date) {
+						return next(new ErrorHandler("Tranship Date is required.", 400));
+					}
+					var status = 'in-tranship'
+					break;
+
+				default:
+					return next(new ErrorHandler("Bad Request", 400));
+			}
+
+			order = await orderModel.create({ ...req.body, status }, { transaction });
+			
 			items.forEach((item) => { item.orderId = order.id; });
 			await orderItemModel.bulkCreate(items, { transaction });
 		}
@@ -369,34 +400,6 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 
 			var msg = noticeText(id)[curStatus];
 			await generateNotification(msg, msg, order, userId);
-			break;
-
-		case "in-bound":
-			const { warehouse, user } = req.body;
-
-			const warehouse_ = await warehouseModel.findByPk(warehouse);
-			if (!warehouse_) return next(new ErrorHandler("No such warehouse exists.", 404));
-
-			const user_ = await userModel.findByPk(user);
-			if (!user_) return next(new ErrorHandler("User not found.", 404));
-
-			const inboundBody = req.body;
-			console.log({ inboundBody });
-			const inBoundOrder = await orderModel.create({ ...inboundBody, status: "out-bound", parentId: id });
-
-			await warehouse_.addOrder(inBoundOrder);
-			await user_.addOrder(inBoundOrder);
-
-			const inBoundItems = [];
-			order.items.map(({ name, quantity }) => {
-				inBoundItems.push({ name, quantity, orderId: inBoundOrder.id });
-			});
-			await orderItemModel.bulkCreate(inBoundItems);
-
-			order.status = "out-bound";
-			await order.save();
-
-			var msg = noticeText(id)[curStatus];
 			break;
 
 		case "out-bound":
