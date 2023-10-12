@@ -11,7 +11,9 @@ exports.getAllNotification = catchAsyncError(async (req, res, next) => {
     attributes: { exclude: ["userId"] },
     order: [['date', 'DESC']]
   });
-  res.status(200).json({ notifications });
+
+  const unread = await notificationModel.count({ where: { userId, seen: false } });
+  res.status(200).json({ notifications, unread });
 })
 
 exports.getNotification = catchAsyncError(async (req, res, next) => {

@@ -27,6 +27,15 @@ const orderItemModel = db.define("OrderItem", {
 }, { timestamps: true });
 
 const orderModel = db.define("Order", {
+  orderType: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      isValidOrderType: function (type) {
+        return ['arrival', 'tranship', 'complete', 'partial'].includes(type);
+      }
+    }
+  },
   tin_no: {
     type: DataTypes.STRING
   },

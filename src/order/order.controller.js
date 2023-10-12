@@ -81,12 +81,13 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 		transaction = await db.transaction();
 
 		if (parentId) {
-			const parentOrder = await orderModel.findOne({ where: { id: parentId, status: 'in-bound' } }, { include: includeItems });
+			const parentOrder = await orderModel.findOne({ where: { id: parentId, status: 'in-bound' }, include: includeItems });
 			if (!parentOrder) {
 				await transaction.rollback();
 				return next(new ErrorHandler("Bad Request. No Parent Order", 400));
 			}
 
+			console.log({ parentOrder })
 			if (!req.body.exit_date) {
 				return next(new ErrorHandler("Exit Date is required.", 400));
 			}
@@ -108,6 +109,11 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					// ------------ UPDATING PARENT ORDER END --------------------
 
 					// ------------ CREATING SUB ORDER IIEMS START ---------------------
+
+					// const itemsComp = parentOrder.items.map(({ name, quantity }) => {
+					// 	return { name, quantity, orderId: order.id };
+					// })
+					// await orderItemModel.bulkCreate(itemsComp, { transaction });
 					items.forEach((item) => { item.orderId = order.id; });
 					await orderItemModel.bulkCreate(items, { transaction });
 					// ------------ CREATING SUB ORDER IIEMS END -----------------------
@@ -128,8 +134,10 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 						}
 
 						console.log({ i: items[i], id, keep, out, name })
+						outCheck |= (items[i].out === 0);
+						keepCheck |= (items[i].keep === 0);
+
 						if (keep === 0) {
-							outCheck = false;
 							const isDeleted = await orderItemModel.destroy({ where: { [Op.and]: { orderId: parentId, id } }, transaction });
 							if (!isDeleted) {
 								await transaction.rollback();
@@ -137,10 +145,9 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 							}
 							console.log({ isDeleted });
 						} else {
-							keepCheck = false;
 							const [isUpdated] = await orderItemModel.update({ quantity: keep }, {
-								where: { [Op.and]: { orderId: parentId, id } }
-							}, { transaction });
+								where: { [Op.and]: { orderId: parentId, id } }, transaction
+							});
 
 							if (!isUpdated) {
 								await transaction.rollback();
@@ -152,7 +159,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					}
 
 					console.log({ keepCheck, outCheck })
-					if (keepCheck || outCheck) {
+					if (!keepCheck || !outCheck) {
 						await transaction.rollback();
 						return next(new ErrorHandler("Bad Request", 400));
 					}
@@ -310,7 +317,8 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 	const history = await orderModel.findAll({
 		where: { parentId: id },
 		include: [includeItems],
-		attributes: ['id', 'arrival_date', 'exit_date', 'parentId', 'subOrderId']
+		attributes: ['id', 'arrival_date', 'exit_date', 'parentId', 'subOrderId', 'orderType'],
+		order: [['subOrderId', 'ASC']]
 	});
 
 	res.status(200).json({ order, history });

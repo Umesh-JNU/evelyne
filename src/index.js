@@ -165,6 +165,7 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "DDCOM_no": "123",
 //       "quantity_decl": "quantity_decl",
 //       "physical_quant": "physical_quant",
+//       "arrival_date": "2023-10-03T06:14:44.000Z",
 //       "truck_no": "o0123",
 //       "container_no": "12345",
 //       "transporter": "transporter",
@@ -178,7 +179,8 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "customs": "customs",
 //       // "client_valid": false,
 //       "userId": 3,
-//       "warehouseId": 1
+//       "warehouseId": 1,
+//       "orderType": 'arrival'
 //     },
 //     {
 //       "tin_no": "tin_no",
@@ -190,6 +192,7 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "quantity_decl": "quantity_decl",
 //       "physical_quant": "physical_quant",
 //       "truck_no": "o0123",
+//       "arrival_date": "2023-10-03T06:14:44.000Z",
 //       "container_no": "12345",
 //       "transporter": "transporter",
 //       "ref_no": "098",
@@ -202,7 +205,8 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "customs": "customs",
 //       // "client_valid": false,
 //       "userId": 3,
-//       "warehouseId": 1
+//       "warehouseId": 1,
+//       "orderType": 'arrival'
 //     },
 //     {
 //       "tin_no": "tin_no",
@@ -214,6 +218,7 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "quantity_decl": "quantity_decl",
 //       "physical_quant": "physical_quant",
 //       "truck_no": "o0123",
+//       "arrival_date": "2023-10-03T06:14:44.000Z",
 //       "container_no": "12345",
 //       "transporter": "transporter",
 //       "ref_no": "098",
@@ -226,7 +231,8 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "customs": "customs",
 //       // "client_valid": false,
 //       "userId": 5,
-//       "warehouseId": 1
+//       "warehouseId": 1,
+//       "orderType": 'arrival'
 //     },
 //     {
 //       "tin_no": "",
@@ -238,6 +244,7 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "quantity_decl": "",
 //       "physical_quant": "",
 //       "truck_no": "",
+//       "arrival_date": "2023-10-03T06:14:44.000Z",
 //       "container_no": "",
 //       "transporter": "",
 //       "ref_no": "",
@@ -250,7 +257,8 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "customs": "",
 //       // "client_valid": false,
 //       "userId": 3,
-//       "warehouseId": 1
+//       "warehouseId": 1,
+//       "orderType": 'arrival'
 //     }
 //   ]);
 
