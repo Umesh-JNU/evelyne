@@ -233,7 +233,7 @@ orderModel.warehouseOrders = async function (warehouseId, status) {
       break;
     default:
       whereQuery = {
-        warehouseId, status: ["in-bound", "out-tranship", "exit"] // exclude in-tranship and arrived
+        warehouseId, status: ["in-bound", "out-tranship", "exit"], parentId: null // exclude in-tranship and arrived
       }
       break;
   }
