@@ -81,12 +81,18 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 		transaction = await db.transaction();
 
 		if (parentId) {
-			const parentOrder = await orderModel.findOne({ where: { id: parentId, status: 'in-bound' }, include: includeItems });
+			const parentOrder = await orderModel.findOne({
+				where: { id: parentId, status: 'in-bound' },
+				// include: includeItems,
+				attributes: { include: includeCountAttr }
+			});
 			if (!parentOrder) {
 				await transaction.rollback();
 				return next(new ErrorHandler("Bad Request. No Parent Order", 400));
 			}
 
+			const numItems = parentOrder.get('itemCount');;
+			const ttlQty = parseInt(parentOrder.get('totalWeight'));
 			console.log({ parentOrder })
 			if (!req.body.exit_date) {
 				return next(new ErrorHandler("Exit Date is required.", 400));
@@ -123,8 +129,25 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					console.log("PARTIAL ORDER REQUEST")
 					// NOTHING TO DO WITH PARENT ORDER 
 					// ONLY UPDATE PARENT ORDER ITEMS AND CREATE ITEMS FOR SUB_ORDER
-					let keepCheck = true;
-					let outCheck = true;
+
+					// This loop checks for the existence of item 
+					// and validate at least one item is out and one item is kept
+					console.log({ numItems, itemLen: items.length, ttlQty })
+					if (items.length <= numItems) {
+						var ttlOut = items.reduce((t, i) => { return t + i.out; }, 0);
+						console.log({ ttlOut })
+						if (ttlOut === 0) {
+							return next(new ErrorHandler("Out Bound At least 1 item.", 400));
+						}
+						if (ttlOut === ttlQty) {
+							return next(new ErrorHandler("All Items can't be out-bound at a time.", 400));
+						}
+					} else {
+						await transaction.rollback();
+						return next(new ErrorHandler("Bad Request", 400));
+					}
+
+					// return res.json({ ttlOut })
 					for (let i = 0; i < items.length; i++) {
 						const { id, keep, out, name } = items[i];
 						const item = await orderItemModel.findOne({ where: { id, quantity: keep + out } });
@@ -134,8 +157,10 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 						}
 
 						console.log({ i: items[i], id, keep, out, name })
-						outCheck |= (items[i].out === 0);
-						keepCheck |= (items[i].keep === 0);
+						if (out === 0) {
+							await transaction.rollback();
+							return next(new ErrorHandler("Out bound quantity can't be 0.", 400));
+						};
 
 						if (keep === 0) {
 							const isDeleted = await orderItemModel.destroy({ where: { [Op.and]: { orderId: parentId, id } }, transaction });
@@ -157,15 +182,10 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 
 						await orderItemModel.create({ name, quantity: out, orderId: order.id }, { transaction });
 					}
-
-					console.log({ keepCheck, outCheck })
-					if (!keepCheck || !outCheck) {
-						await transaction.rollback();
-						return next(new ErrorHandler("Bad Request", 400));
-					}
 					break;
 
 				default:
+					console.log("Not partial and complete")
 					await transaction.rollback();
 					return next(new ErrorHandler("Bad Request", 400));
 			}
@@ -187,6 +207,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					break;
 
 				default:
+					console.log("Not Arrival / Tranship - missing parent id")
 					return next(new ErrorHandler("Bad Request", 400));
 			}
 
