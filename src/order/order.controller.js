@@ -470,7 +470,7 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 			break;
 
 		case "in-tranship":
-			order.trans_date = curDateTime;
+			// order.trans_date = curDateTime;
 			order.status = "out-tranship";
 			await order.save();
 
