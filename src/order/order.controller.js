@@ -120,6 +120,14 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					// 	return { name, quantity, orderId: order.id };
 					// })
 					// await orderItemModel.bulkCreate(itemsComp, { transaction });
+
+					const isDel = await orderItemModel.destroy({ where: { orderId: parentId }, transaction });
+					if (!isDel) {
+						await transaction.rollback();
+						return next(new ErrorHandler("Bad Request", 400));
+					}
+					console.log({ isDel });
+
 					items.forEach((item) => { item.orderId = order.id; });
 					await orderItemModel.bulkCreate(items, { transaction });
 					// ------------ CREATING SUB ORDER IIEMS END -----------------------
@@ -268,7 +276,7 @@ exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 			console.log("in user");
 			var { counts } = await orderModel.getCounts({ userId });
 			var orders = await orderModel.findAll({
-				where: { userId, ...query.where, status: { [Op.ne]: "out-bound" } },
+				where: { userId, ...query.where, status: { [Op.ne]: "out-bound" }, parentId: null },
 				include: [includeItems],
 				attributes: ["id", "status", "createdAt"],
 				// { exclude: ["warehouseId", "userId"] },
@@ -298,7 +306,10 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 		var order = await orderModel.findOne({
 			where: { id, userId },
 			include: includeOptions(),
-			attributes: { exclude: ["userId", "warehouseId"] }
+			attributes: {
+				include: includeCountAttr,
+				exclude: ["userId", "warehouseId"]
+			}
 		});
 	}
 	else if (user.userRole.role === 'controller') {
@@ -482,9 +493,9 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 				// parentOrder.exit_date = curDateTime;
 				await parentOrder.save();
 
-				var msg = noticeText(order.parentId)[curStatus];
-				await generateNotification(msg, msg, order, userId);
 			}
+			var msg = noticeText(order.parentId)[curStatus];
+			await generateNotification(msg, msg, order, userId);
 			// order.exit_date = curDateTime;
 			order.status = "exit";
 			await order.save();

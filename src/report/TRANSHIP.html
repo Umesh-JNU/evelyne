@@ -48,10 +48,6 @@
       padding: 10px 2.5rem;
     }
 
-    td {
-      border-left: none;
-    }
-
     .table th {
       text-align: left;
       vertical-align: middle !important;
@@ -175,6 +171,28 @@
             <th>Validation of Client</th>
             <td></td>
           </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="details">
+      <h2>Product Information</h2>
+      <p><b>Item Count: </b>{{ order.itemCount }}</p>
+      <p><b>Total Weight: </b>{{ order.totalWeight }}</p>
+      <table class="table-border" style="width: 60%;">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Quantity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each order.items}}
+          <tr>
+            <td>{{name}}</td>
+            <td>{{quantity}}</td>
+          </tr>
+          {{/each}}
         </tbody>
       </table>
     </div>
