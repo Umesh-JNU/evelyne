@@ -189,7 +189,7 @@ const includeCountAttr = [
   ],
   [
     db.literal(`(
-        SELECT SUM(quantity)
+        SELECT IFNULL(SUM(quantity), 0) 
         FROM OrderItems AS item
         WHERE	item.orderId = Order.id
     )`),
