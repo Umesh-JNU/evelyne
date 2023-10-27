@@ -510,7 +510,22 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 				case 'in-bound':
 					for (let i in items) {
 						const { itemId, quantity } = items[i];
-						await orderItemModel.decrement({ quantity }, { where: { id: itemId, orderId: order.parentId } });
+						const item = await orderItemModel.findOne({ where: { id: itemId, orderId: order.parentId } });
+						if (!item) {
+							return next(new ErrorHandler("Item Not Found.", 400));
+						}
+
+						if (item.quantity < quantity) {
+							return next(new ErrorHandler("Order can't be approved as some of item quantity is more than available quantity.", 400));
+						}
+
+						if (item.quantity - quantity === 0) {
+							await item.destroy();
+						} else {
+							item.quantity = item.quantity - quantity;
+							await item.save();
+						}
+						// await orderItemModel.decrement({ quantity }, { where: { id: itemId, orderId: order.parentId } });
 					}
 
 					parentOrder.exit_date = order.exit_date;
@@ -518,7 +533,7 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 					break;
 
 				case 'out-bound':
-					const isDel = await orderItemModel.destroy({ where: { orderId: parentId } });
+					const isDel = await orderItemModel.destroy({ where: { orderId: order.parentId } });
 					if (!isDel) {
 						await transaction.rollback();
 						return next(new ErrorHandler("Bad Request", 400));
