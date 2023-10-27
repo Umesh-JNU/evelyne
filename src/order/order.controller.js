@@ -260,7 +260,7 @@ exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 		case "admin":
 			var { counts, total: orderCount } = await orderModel.getCounts(query.where);
 			var orders = await orderModel.findAll({
-				where: { ...query.where },
+				...query,
 				include: includeOptions(),
 				attributes: { exclude: ["warehouseId", "userId"] },
 				order: [['createdAt', 'DESC']]

@@ -23,8 +23,8 @@ module.exports = (key, requestQuery) => {
       [key]: parseInt(orderId)
     };
   }
-  if(unassigned) {
-    console.log({unassigned})
+  if (unassigned) {
+    console.log({ unassigned })
     query.where = {
       ...query.where,
       [unassigned]: null
@@ -38,5 +38,6 @@ module.exports = (key, requestQuery) => {
     const skip = rpp * (cp - 1);
     query = { ...query, offset: skip, limit: rpp };
   }
+  console.log({ query })
   return query;
 };
