@@ -393,6 +393,7 @@ exports.deleteOrder = catchAsyncError(async (req, res, next) => {
 exports.discardOrder = catchAsyncError(async (req, res, next) => {
 	const { id } = req.params;
 	var order = await orderModel.update({ status: "discarded" }, { where: { id } });
+	await orderModel.update({ status: 'in-bound' }, { where: { id: order.parentId } });
 	res.status(200).json({ message: "Order Discarded Successfully." });
 });
 
