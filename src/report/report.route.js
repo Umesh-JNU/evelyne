@@ -7,6 +7,6 @@ router.get("/:id", auth, authRole(["admin", "manager", "controller"]), getReport
 router.get("/track-order/:id", auth, trackOrder); // id = order id
 router.get("/transaction/:id", auth, authRole(["controller"]), transaction); // id = transaction id
 router.get("/bond-report/:id", auth, bondReport); // id = warehouse id
-router.get("/order/:id", auth, authRole(['admin', 'manager', 'controller']), getOrderPDF);
+router.get("/order/:id", auth, getOrderPDF);
 
 module.exports = router;

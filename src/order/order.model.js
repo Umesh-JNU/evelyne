@@ -165,7 +165,7 @@ const orderModel = db.define("Order", {
     defaultValue: false,
   },
   status: {
-    type: DataTypes.ENUM("arrived", "out-bound", "in-bound", "in-tranship", "out-tranship", "exit"),
+    type: DataTypes.ENUM("arrived", "out-bound", "in-bound", "in-tranship", "out-tranship", "exit", "discarded"),
     defaultValue: "arrived",
   },
   parentId: {

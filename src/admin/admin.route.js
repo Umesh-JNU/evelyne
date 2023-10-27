@@ -8,7 +8,7 @@ const { createContent, updateContent, deleteContent } = require("../staticDetail
 
 const { createWarehouse, updateWarehouse, deleteWarehouse, myWarehouse, housesAndOrderCount, warehouseAndAllOrders, getWarehouseOrder, housesAndTransactionCount, getWarehouseTransaction, assignHandler, removeHandler } = require("../warehouse");
 
-const { createOrder, getAllOrder, getOrder, updateOrder, updateOrderStatus, approveOrder, deleteOrder, UpdateOrderItem, addOrderItem, deleteOrderItem } = require('../order');
+const { createOrder, getAllOrder, getOrder, updateOrder, updateOrderStatus, approveOrder, deleteOrder, UpdateOrderItem, addOrderItem, deleteOrderItem, discardOrder } = require('../order');
 
 const { createTransaction, getAllTransaction, getTransaction, updateTransaction, deleteTransaction, addComment } = require("../transaction");
 
@@ -79,7 +79,9 @@ managerRoute.post("/order", order.post, auth, authManager, createOrder);
 managerRoute.get("/warehouse/orders", auth, authManager, getWarehouseOrder);
 managerRoute.route("/order/:id")
   .get(auth, authManager, getOrder)
-  .put(order.put, auth, authManager, updateOrder);
+  .put(order.put, auth, authManager, updateOrder)
+  .delete(auth, authManager, deleteOrder);
+managerRoute.put("/order/:id/discard", auth, authManager, discardOrder);
 // managerRoute.post("/order/:id/items", order.item, auth, authManager, addOrderItem);
 // managerRoute.route("/order/:id/item/:item")
 //   .put(auth, order.itemObj, authManager, UpdateOrderItem)

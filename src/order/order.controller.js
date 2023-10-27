@@ -349,7 +349,7 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 	const history = await orderModel.findAll({
 		where: { parentId: id },
 		include: [includeItems],
-		attributes: ['id', 'arrival_date', 'exit_date', 'parentId', 'subOrderId', 'orderType'],
+		attributes: ['id', 'arrival_date', 'exit_date', 'parentId', 'subOrderId', 'orderType', 'status'],
 		order: [['subOrderId', 'ASC']]
 	});
 
@@ -372,12 +372,34 @@ exports.updateOrder = catchAsyncError(async (req, res, next) => {
 
 exports.deleteOrder = catchAsyncError(async (req, res, next) => {
 	const { id } = req.params;
-	const isDeleted = await orderModel.destroy({ where: { id } });
-	if (isDeleted === 0) return next(new ErrorHandler("Order not found.", 404));
+	try {
+		// start
+		const transaction = await db.transaction();
 
-	res.status(200).json({ message: "Order Deleted Successfully.", isDeleted });
+		await orderItemModel.destroy({ where: { orderId: id }, transaction });
+
+		const isDeleted = await orderModel.destroy({ where: { id }, transaction });
+		if (isDeleted === 0) {
+			await transaction.rollback();
+			return next(new ErrorHandler("Order not found.", 404));
+		}
+
+		// Commit the transaction
+		await transaction.commit();
+
+		res.status(200).json({ message: "Order Discarded Successfully.", isDeleted });
+	} catch (error) {
+		// Rollback the transaction if an error occurs
+		if (transaction) await transaction.rollback();
+		return next(new ErrorHandler(error.message, 500));
+	}
 })
 
+exports.discardOrder = catchAsyncError(async (req, res, next) => {
+	const { id } = req.params;
+	var order = await orderModel.update({ status: "discarded" }, { where: { id } });
+	res.status(200).json({ message: "Order Discarded Successfully." });
+});
 
 exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
 	console.log("change status", req.body);
