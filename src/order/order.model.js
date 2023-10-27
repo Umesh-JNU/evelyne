@@ -6,6 +6,9 @@ const isDate = (date) => {
 }
 
 const orderItemModel = db.define("OrderItem", {
+  itemId: {
+    type: DataTypes.INTEGER
+  },
   name: {
     type: DataTypes.STRING,
     allowNull: false,

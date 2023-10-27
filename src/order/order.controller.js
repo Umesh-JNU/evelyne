@@ -12,7 +12,7 @@ const { notificationModel } = require("../notifications");
 const includeItems = {
 	model: orderItemModel,
 	as: "items",
-	attributes: ["id", "name", "quantity"],
+	attributes: ["id", "name", "quantity", "itemId"],
 };
 const includeWarehouse = {
 	model: warehouseModel,
@@ -119,16 +119,9 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					// const itemsComp = parentOrder.items.map(({ name, quantity }) => {
 					// 	return { name, quantity, orderId: order.id };
 					// })
-					// await orderItemModel.bulkCreate(itemsComp, { transaction });
+					// await orderItemModel.bulkCreate(itemsComp, { transaction })
 
-					const isDel = await orderItemModel.destroy({ where: { orderId: parentId }, transaction });
-					if (!isDel) {
-						await transaction.rollback();
-						return next(new ErrorHandler("Bad Request", 400));
-					}
-					console.log({ isDel });
-
-					items.forEach((item) => { item.orderId = order.id; });
+					items.forEach((item) => { itemId: item.id, item.orderId = order.id; });
 					await orderItemModel.bulkCreate(items, { transaction });
 					// ------------ CREATING SUB ORDER IIEMS END -----------------------
 					break;
@@ -158,10 +151,12 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					// return res.json({ ttlOut })
 					for (let i = 0; i < items.length; i++) {
 						const { id, keep, out, name } = items[i];
-						const item = await orderItemModel.findOne({ where: { id, quantity: keep + out } });
+						const whereQry = { id, orderId: parentId, quantity: keep + out };
+						console.log({ whereQry });
+						const item = await orderItemModel.findOne({ where: whereQry });
 						if (!item) {
 							await transaction.rollback();
-							return next(new ErrorHandler("Bad Request.", 400));
+							return next(new ErrorHandler("Bad Request. Item Not Found", 400));
 						}
 
 						console.log({ i: items[i], id, keep, out, name })
@@ -170,25 +165,25 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 							return next(new ErrorHandler("Out bound quantity can't be 0.", 400));
 						};
 
-						if (keep === 0) {
-							const isDeleted = await orderItemModel.destroy({ where: { [Op.and]: { orderId: parentId, id } }, transaction });
-							if (!isDeleted) {
-								await transaction.rollback();
-								return next(new ErrorHandler("Bad Request", 400));
-							}
-							console.log({ isDeleted });
-						} else {
-							const [isUpdated] = await orderItemModel.update({ quantity: keep }, {
-								where: { [Op.and]: { orderId: parentId, id } }, transaction
-							});
+						// if (keep === 0) {
+						// 	const isDeleted = await orderItemModel.destroy({ where: { [Op.and]: { orderId: parentId, id } }, transaction });
+						// 	if (!isDeleted) {
+						// 		await transaction.rollback();
+						// 		return next(new ErrorHandler("Bad Request", 400));
+						// 	}
+						// 	console.log({ isDeleted });
+						// } else {
+						// 	const [isUpdated] = await orderItemModel.update({ quantity: keep }, {
+						// 		where: { [Op.and]: { orderId: parentId, id } }, transaction
+						// 	});
 
-							if (!isUpdated) {
-								await transaction.rollback();
-								return next(new ErrorHandler("Bad Request", 400));
-							}
-						}
+						// 	if (!isUpdated) {
+						// 		await transaction.rollback();
+						// 		return next(new ErrorHandler("Bad Request", 400));
+						// 	}
+						// }
 
-						await orderItemModel.create({ name, quantity: out, orderId: order.id }, { transaction });
+						await orderItemModel.create({ itemId: id, name, quantity: out, orderId: order.id }, { transaction });
 					}
 					break;
 
@@ -472,7 +467,6 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 	if (!order) return next(new ErrorHandler("Order not found.", 404));
 
 	const curStatus = order.status;
-	const curDateTime = new Date();
 	switch (curStatus) {
 		case "arrived":
 			console.log({ o: order.toJSON() })
@@ -510,12 +504,34 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 			if (!parentOrder) {
 				return next(new ErrorHandler("Bad Request", 400));
 			}
-			if (parentOrder.status === 'out-bound') {
-				parentOrder.status = 'exit';
-				// parentOrder.exit_date = curDateTime;
-				await parentOrder.save();
 
+			const items = order.get('items');
+			switch (parentOrder.status) {
+				case 'in-bound':
+					for (let i in items) {
+						const { itemId, quantity } = items[i];
+						await orderItemModel.decrement({ quantity }, { where: { id: itemId, orderId: order.parentId } });
+					}
+
+					parentOrder.exit_date = order.exit_date;
+					await parentOrder.save();
+					break;
+
+				case 'out-bound':
+					const isDel = await orderItemModel.destroy({ where: { orderId: parentId } });
+					if (!isDel) {
+						await transaction.rollback();
+						return next(new ErrorHandler("Bad Request", 400));
+					}
+					console.log({ isDel });
+					parentOrder.status = 'exit';
+					await parentOrder.save();
+					break;
+
+				default:
+					return next(new ErrorHandler("Bad Request.", 400));
 			}
+
 			var msg = noticeText(order.parentId)[curStatus];
 			await generateNotification(msg, msg, order, userId);
 			// order.exit_date = curDateTime;
