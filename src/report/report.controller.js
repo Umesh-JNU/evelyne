@@ -285,7 +285,7 @@ exports.bondReport = catchAsyncError(async (req, res, next) => {
   transactions.forEach(transaction => {
     console.log({ transaction })
     transactionData.push({
-      date: new Date(data).toISOString().slice(0, 10),
+      date: new Date(date).toISOString().slice(0, 10),
       declaration: transaction.desc,
       value: 0,
       debit: transaction.type === 'debit' ? transaction.amount : 0,
