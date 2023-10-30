@@ -139,7 +139,11 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					// })
 					// await orderItemModel.bulkCreate(itemsComp, { transaction })
 
-					items.forEach((item) => { itemId: item.id, item.orderId = order.id; });
+					items.forEach((item) => { 
+						item.quantity = parseInt(item.quantity);
+						item.itemId = item.id;
+						item.orderId = order.id; 
+					});
 					await orderItemModel.bulkCreate(items, { transaction });
 					// ------------ CREATING SUB ORDER IIEMS END -----------------------
 					break;
@@ -219,7 +223,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					}
 
 					const filled = await getFilledWarehouse(warehouse);
-					const ttl = items.reduce((t, i) => { return t + i.quantity; }, 0);
+					const ttl = items.reduce((t, i) => { return t + parseInt(i.quantity); }, 0);
 					console.log({ filled, ttl, cap: warehouse_.get('capacity') });
 
 					if (ttl > warehouse_.get('capacity') - filled) {
