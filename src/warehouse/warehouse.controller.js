@@ -158,7 +158,7 @@ exports.getWarehouseOrder = catchAsyncError(async (req, res, next) => {
 			});
 
 			orders = await orderModel.findAll({
-				where: { warehouseId, parentId: null },
+				where: { warehouseId, parentId: null, status: { [Op.ne]: 'out-bound' } },
 				attributes: {
 					include: includeCountAttr,
 					exclude: [...Object.keys(orderModel.rawAttributes).filter(attr => !["id", "status", "parentId", "updatedAt"].includes(attr)), "userId", "warehouseId"]
