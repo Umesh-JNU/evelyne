@@ -297,7 +297,7 @@ exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 
 		case "user":
 			console.log("in user");
-			var { counts } = await orderModel.getCounts({ userId });
+			var { counts } = await orderModel.getCounts({ userId, parentId: null });
 			var orders = await orderModel.findAll({
 				where: { userId, ...query.where, status: { [Op.ne]: "out-bound" }, parentId: null },
 				include: [includeItems],

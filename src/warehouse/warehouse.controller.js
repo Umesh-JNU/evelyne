@@ -132,7 +132,7 @@ exports.housesAndOrderCount = catchAsyncError(async (req, res, next) => {
 	});
 
 	const housesAndOrderCounts = await Promise.all(warehouses.map(async (warehouse) => {
-		const { counts, total } = await orderModel.getCounts({ warehouseId: warehouse.id });
+		const { counts, total } = await orderModel.getCounts({ warehouseId: warehouse.id, parentId: null });
 
 		return { warehouse, total, counts };
 	}));
