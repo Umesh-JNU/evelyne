@@ -3,7 +3,7 @@ const catchAsyncError = require("../../utils/catchAsyncError")
 const getFormattedQuery = require("../../utils/apiFeatures");
 const warehouseModel = require("./warehouse.model");
 const { userModel, roleModel } = require("../user/user.model");
-const { orderModel, orderItemModel } = require("../order/order.model");
+const { orderModel, orderItemModel, includeCountAttr } = require("../order/order.model");
 const { transactionModel } = require("../transaction/transaction.model");
 const { Op } = require("sequelize");
 const { db } = require("../../config/database");
@@ -157,7 +157,14 @@ exports.getWarehouseOrder = catchAsyncError(async (req, res, next) => {
 				attributes: { exclude: ["managerId"] }
 			});
 
-			orders = await orderModel.warehouseOrders(warehouseId);
+			orders = await orderModel.findAll({
+				where: { warehouseId, parentId: null },
+				attributes: {
+					include: includeCountAttr,
+					exclude: [...Object.keys(orderModel.rawAttributes).filter(attr => !["id", "status", "parentId", "updatedAt"].includes(attr)), "userId", "warehouseId"]
+				},
+				order: [['createdAt', 'DESC']]
+			});
 
 			return res.json({ warehouse, orders });
 
