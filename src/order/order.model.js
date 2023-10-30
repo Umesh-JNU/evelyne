@@ -253,6 +253,7 @@ orderModel.warehouseOrders = async function (warehouseId, status) {
 }
 
 orderModel.getGrpCount = async function (query) {
+  console.log({ query })
   return await this.findAll({
     where: query,
     attributes: ['status', [db.fn('COUNT', db.col('id')), 'count']],
@@ -277,7 +278,7 @@ orderModel.getCounts = async function (query) {
     // console.log({ v }, result[v].dataValues)
     const { status, count } = result[v].dataValues;
     const val = result[v].dataValues;
-    console.log(val.status, val.count);
+    console.log({ s: val.status, c: val.count });
 
     counts[status] = count;
     total += count;

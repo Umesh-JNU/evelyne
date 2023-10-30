@@ -53,6 +53,24 @@ const generateNotification = async (userNotiText, managerNotiText, order, manage
 
 };
 
+const getFilledWarehouse = async (wID) => {
+	const items = await orderItemModel.findAll({
+		include: [
+			{
+				model: orderModel,
+				as: "order",
+				where: {
+					warehouseId: wID,
+					[Op.or]: [{ status: 'in-bound' }, { status: 'out-bound' }]
+				},
+				attributes: []
+			}
+		]
+	});
+
+	return items.reduce((t, i) => { return t + i.quantity; }, 0);
+};
+
 exports.createOrder = catchAsyncError(async (req, res, next) => {
 	console.log("create Order", req.body);
 	const { warehouse, user, items, parentId, orderType } = req.body;
@@ -199,6 +217,16 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					if (!req.body.arrival_date) {
 						return next(new ErrorHandler("Arrival Date is required.", 400));
 					}
+
+					const filled = await getFilledWarehouse(warehouse);
+					const ttl = items.reduce((t, i) => { return t + i.quantity; }, 0);
+					console.log({ filled, ttl, cap: warehouse_.get('capacity') });
+
+					if (ttl > warehouse_.get('capacity') - filled) {
+						await transaction.rollback();
+						return next(new ErrorHandler("Order can't be placed in the given warehouse. Not enough space.", 400));
+					};
+
 					var status = 'arrived'
 					break;
 
@@ -477,10 +505,20 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 		case "arrived":
 			console.log({ o: order.toJSON() })
 			const apprBody = order.toJSON();
+
+			var warehouse = await warehouseModel.findByPk(apprBody.warehouseId);
+			const filled = await getFilledWarehouse(apprBody.warehouseId);
+			const ttl = apprBody.items.reduce((t, i) => { return t + i.quantity; }, 0);
+
+			if (ttl > warehouse.get('capacity') - filled) {
+				return next(new ErrorHandler("Order can't be placed in the given warehouse. Not enough space.", 400));
+			}
+
 			["id", "createdAt", "updatedAt", "items", "parentId", "subOrderId"].forEach((k) => {
 				delete apprBody[k];
 			})
 			console.log({ apprBody, o: order.toJSON() });
+
 			const apprOrder = await orderModel.create({ ...apprBody, parentId: id });
 			const apprItems = [];
 			order.items.map(({ name, quantity }) => {
@@ -490,6 +528,9 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 
 			order.status = "in-bound";
 			await order.save();
+
+			warehouse.filled = filled + ttl;
+			await warehouse.save();
 
 			var msg = noticeText(id)[curStatus];
 			await generateNotification(msg, msg, order, userId);
@@ -553,6 +594,12 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 					return next(new ErrorHandler("Bad Request.", 400));
 			}
 
+			var warehouse = await warehouseModel.findByPk(order.get('warehouseId'));
+			const q = items.reduce((t, i) => { return t + i.quantity; }, 0);
+
+			warehouse.filled = warehouse.filled - q;
+			await warehouse.save();
+			
 			var msg = noticeText(order.parentId)[curStatus];
 			await generateNotification(msg, msg, order, userId);
 			// order.exit_date = curDateTime;
