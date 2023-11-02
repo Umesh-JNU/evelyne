@@ -48,16 +48,70 @@ const sendReport = async (templateName, data, res) => {
 };
 
 const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
+  const dt = {
+    'arrival_date': 'arrival_date',
+    'exit_date': 'exit_date',
+    'in_trans': 'arrival_date',
+    'out_trans': 'trans_date'
+  }[date_type];
+  const notNull = { [Op.ne]: null };
+  switch (date_type) {
+    case 'arrival_date':
+      var query = {
+        arrival_date: notNull,
+        arrival_date: {
+          [Op.gte]: startDate,
+          [Op.lt]: endDate,
+        },
+        status: 'arrived',
+        parentId: notNull
+      }
+      break;
+
+    case 'exit_date':
+      var query = {
+        exit_date: notNull,
+        exit_date: {
+          [Op.gte]: startDate,
+          [Op.lt]: endDate,
+        },
+        status: 'exit',
+        parentId: notNull
+      }
+      break;
+
+    case 'in_trans':
+      var query = {
+        arrival_date: notNull,
+        arrival_date: {
+          [Op.gte]: startDate,
+          [Op.lt]: endDate,
+        },
+        status: 'in-tranship',
+      }
+      break;
+
+    case 'out_trans':
+      var query = {
+        trans_date: notNull,
+        trans_date: {
+          [Op.gte]: startDate,
+          [Op.lt]: endDate,
+        },
+        status: 'out-tranship'
+      }
+      break;
+
+    default:
+      throw new ErrorHandler('Something Went Wrong', 500);
+  }
+
+  console.log({ query });
+
   const orders = await orderModel.findAll({
     where: {
       warehouseId,
-      createdAt: {
-        [Op.gte]: startDate,
-        [Op.lt]: endDate,
-      },
-      [date_type]: {
-        [Op.not]: null
-      }
+      ...query
     },
     include: [{
       model: userModel,
@@ -94,7 +148,7 @@ const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
     let index = 1;
     orders.forEach(order => {
       order.index = index;
-      order[date_type] = order[date_type].toISOString().split('T')[0]; index++;
+      order[dt] = order[dt].toISOString().split('T')[0]; index++;
     })
   });
 
@@ -169,15 +223,17 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
   }
 
   const arrivedOrders = await getOrdersJSON('arrival_date', id, startDate, endDate);
-  const transOrders = await getOrdersJSON('trans_date', id, startDate, endDate);
+  const inTransOrders = await getOrdersJSON('in_trans', id, startDate, endDate);
+  const outTransOrders = await getOrdersJSON('out_trans', id, startDate, endDate);
   const exitOrders = await getOrdersJSON('exit_date', id, startDate, endDate);
 
-  if (arrivedOrders.length === 0 && transOrders.length === 0 && exitOrders.length === 0) {
+  if (arrivedOrders.length === 0 && inTransOrders.length === 0 && outTransOrders.length === 0 && exitOrders.length === 0) {
     return next(new ErrorHandler("No orders", 400));
   }
 
   console.log("download report", req.query);
-  await sendReport(template, { heading: title, arrivedOrders, transOrders, exitOrders }, res);
+  // return res.json({ arrivedOrders, inTransOrders, outTransOrders, exitOrders });
+  await sendReport(template, { heading: title, arrivedOrders, inTransOrders, outTransOrders, exitOrders }, res);
 });
 
 exports.trackOrder = catchAsyncError(async (req, res, next) => {

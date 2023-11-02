@@ -46,6 +46,7 @@
       <tr>
         <th>No</th>
         <th>Date/Entry</th>
+        <th>Order ID</th>
         <th>Declaration</th>
         <th>Product</th>
         <th>Total Qty</th>
@@ -63,50 +64,7 @@
       <tr>
         <td>{{index}}</td>
         <td>{{arrival_date}}</td>
-        <td>{{quantity_decl}}</td>
-        <td>
-          {{#each items}}
-          <p> {{name}} </p>
-          {{/each}}
-        </td>
-        <td>{{itemCount}}</td>
-        <td>Kg</td>
-        <td>{{totalWeight}}</td>
-        <td>{{truck_no}}</td>
-        <td>{{comment}}</td>
-        <td>10</td>
-        <td>100</td>
-        <td>100</td>
-      </tr>
-      {{/each}}
-    </tbody>
-  </table>
-  {{/each}}
-
-  {{#each transOrders}}
-  <h2>{{client_name}}</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>No</th>
-        <th>Date/Transshipment</th>
-        <th>Declaration</th>
-        <th>Product</th>
-        <th>Total Qty</th>
-        <th>Kg/Unit</th>
-        <th>Total Kg</th>
-        <th>Truck No</th>
-        <th>Comments</th>
-        <th>Value per unit/USD</th>
-        <th>Total value/$/single window rate</th>
-        <th>Total value/local currency</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#each orders}}
-      <tr>
-        <td>{{index}}</td>
-        <td>{{trans_date}}</td>
+        <td>{{id}}</td>
         <td>{{quantity_decl}}</td>
         <td>
           {{#each items}}
@@ -134,6 +92,7 @@
       <tr>
         <th>No</th>
         <th>Date/Exit</th>
+        <th>Order ID</th>
         <th>Declaration</th>
         <th>Product</th>
         <th>Total Qty</th>
@@ -151,6 +110,7 @@
       <tr>
         <td>{{index}}</td>
         <td>{{exit_date}}</td>
+        <td>{{id}}</td>
         <td>{{quantity_decl}}</td>
         <td>
           {{#each items}}
@@ -170,6 +130,99 @@
     </tbody>
   </table>
   {{/each}}
+
+  {{#each inTransOrders}}
+  <h2>{{client_name}}</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Date/In-Transshipment</th>
+        <th>Order ID</th>
+        <th>Declaration</th>
+        <th>Product</th>
+        <th>Total Qty</th>
+        <th>Kg/Unit</th>
+        <th>Total Kg</th>
+        <th>Truck No</th>
+        <th>Comments</th>
+        <th>Value per unit/USD</th>
+        <th>Total value/$/single window rate</th>
+        <th>Total value/local currency</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each orders}}
+      <tr>
+        <td>{{index}}</td>
+        <td>{{arrival_date}}</td>
+        <td>{{id}}</td>
+        <td>{{quantity_decl}}</td>
+        <td>
+          {{#each items}}
+          <p> {{name}} </p>
+          {{/each}}
+        </td>
+        <td>{{itemCount}}</td>
+        <td>Kg</td>
+        <td>{{totalWeight}}</td>
+        <td>{{truck_no}}</td>
+        <td>{{comment}}</td>
+        <td>10</td>
+        <td>100</td>
+        <td>100</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  {{/each}}
+  
+  {{#each outTransOrders}}
+  <h2>{{client_name}}</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Date/Out-Transshipment</th>
+        <th>Order ID</th>
+        <th>Declaration</th>
+        <th>Product</th>
+        <th>Total Qty</th>
+        <th>Kg/Unit</th>
+        <th>Total Kg</th>
+        <th>Truck No</th>
+        <th>Comments</th>
+        <th>Value per unit/USD</th>
+        <th>Total value/$/single window rate</th>
+        <th>Total value/local currency</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each orders}}
+      <tr>
+        <td>{{index}}</td>
+        <td>{{trans_date}}</td>
+        <td>{{id}}</td>
+        <td>{{quantity_decl}}</td>
+        <td>
+          {{#each items}}
+          <p> {{name}} </p>
+          {{/each}}
+        </td>
+        <td>{{itemCount}}</td>
+        <td>Kg</td>
+        <td>{{totalWeight}}</td>
+        <td>{{truck_no}}</td>
+        <td>{{comment}}</td>
+        <td>10</td>
+        <td>100</td>
+        <td>100</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  {{/each}}
+
 </body>
 
 </html>

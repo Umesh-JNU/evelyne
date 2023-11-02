@@ -139,10 +139,10 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					// })
 					// await orderItemModel.bulkCreate(itemsComp, { transaction })
 
-					items.forEach((item) => { 
+					items.forEach((item) => {
 						item.quantity = parseInt(item.quantity);
 						item.itemId = item.id;
-						item.orderId = order.id; 
+						item.orderId = order.id;
 					});
 					await orderItemModel.bulkCreate(items, { transaction });
 					// ------------ CREATING SUB ORDER IIEMS END -----------------------
@@ -290,6 +290,8 @@ exports.getAllOrder = catchAsyncError(async (req, res, next) => {
 
 	switch (user.userRole.role) {
 		case "admin":
+			query.where.parentId = null;
+			console.log({ query }, 1)
 			var { counts, total: orderCount } = await orderModel.getCounts(query.where);
 			var orders = await orderModel.findAll({
 				...query,
@@ -603,7 +605,7 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 
 			warehouse.filled = warehouse.filled - q;
 			await warehouse.save();
-			
+
 			var msg = noticeText(order.parentId)[curStatus];
 			await generateNotification(msg, msg, order, userId);
 			// order.exit_date = curDateTime;
