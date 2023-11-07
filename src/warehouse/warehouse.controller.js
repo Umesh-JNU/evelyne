@@ -87,13 +87,17 @@ exports.myWarehouse = catchAsyncError(async (req, res, next) => {
 		case "controller":
 			const { id } = req.query;
 			if (id) {
+				const { counts, total } = await orderModel.getCounts({ warehouseId: id, parentId: null });
+
 				return res.status(200).json({
 					warehouse: (await handler.getWarehouses({
 						joinTableAttributes: [],
 						include: includeOptions,
 						where: { id },
 						attributes: { exclude: ['managerId'] }
-					}))[0] || null
+					}))[0] || null,
+					total,
+					counts
 				});
 			}
 			return res.status(200).json({
@@ -109,7 +113,7 @@ exports.myWarehouse = catchAsyncError(async (req, res, next) => {
 			return res.status(200).json({
 				warehouse:
 					await handler.getWarehouse({
-						attributes: ["id", "name", "image", "capacity", "filled"]
+						attributes: ["id", "name", "desc", "image", "capacity", "filled"]
 					})
 			});
 

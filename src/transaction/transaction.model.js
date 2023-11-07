@@ -2,6 +2,7 @@ const { DataTypes } = require("sequelize");
 const { db } = require("../../config/database");
 const { orderModel } = require("../order/order.model");
 const { userModel } = require("../user/user.model");
+const warehouseModel = require("../warehouse/warehouse.model");
 
 const commentModel = db.define(
   "Comments",
@@ -80,10 +81,14 @@ transactionModel.warehouseTrans = async function (warehouseId) {
         model: userModel,
         as: "user",
         attributes: ["id", "fullname"]
+      }, {
+        model: warehouseModel,
+        as: "warehouse",
+        attributes: ["id", "name"]
       }]
     }],
     attributes: {
-      exclude: ["orderId"]
+      exclude: ["orderId", "warehouseId"]
     },
     order: [['createdAt', 'DESC']]
   });

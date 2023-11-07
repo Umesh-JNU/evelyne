@@ -133,6 +133,7 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //   await warehouseModel.bulkCreate([
 //     {
 //       "name": "Warehouse 1",
+//       "desc": "Warehouse Description",
 //       "capacity": "1000",
 //       "filled": "0",
 //       "image": "https://cdn0.iconfinder.com/data/icons/containers/512/palet03.png",
@@ -141,6 +142,7 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //     },
 //     {
 //       "name": "Warehouse 2",
+//       "desc": "Warehouse Description",
 //       "capacity": "1000",
 //       "filled": "0",
 //       "image": "https://cdn0.iconfinder.com/data/icons/containers/512/palet03.png",
@@ -148,6 +150,7 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //     },
 //     {
 //       "name": "Warehouse 3",
+//       "desc": "Warehouse Description",
 //       "capacity": "1000",
 //       "filled": "0",
 //       "image": "https://cdn0.iconfinder.com/data/icons/containers/512/palet03.png",

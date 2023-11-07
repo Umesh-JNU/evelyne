@@ -12,7 +12,10 @@ exports.createContent = catchAsyncError(async (req, res, next) => {
 
 exports.getAllContent = catchAsyncError(async (req, res, next) => {
 	const contents = await contentModel.findAll({});
-	res.status(200).json({ contents });
+	if(contents.length <= 0) {
+		return next(new ErrorHandler("No Contents. Please add.", 404));
+	}
+	res.status(200).json({ contents: contents[0] });
 })
 
 exports.getContent = catchAsyncError(async (req, res, next) => {

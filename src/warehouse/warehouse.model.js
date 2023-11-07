@@ -4,6 +4,14 @@ const { db } = require("../../config/database");
 const warehouseModel = db.define(
   "Warehouse",
   {
+    desc: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: "Warehouse's decription is required." },
+        notNull: { msg: "Warehouse's decription is required." },
+      }
+    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
