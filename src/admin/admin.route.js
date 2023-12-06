@@ -8,7 +8,7 @@ const { createContent, updateContent, deleteContent } = require("../staticDetail
 
 const { createWarehouse, updateWarehouse, deleteWarehouse, myWarehouse, housesAndOrderCount, warehouseAndAllOrders, getWarehouseOrder, housesAndTransactionCount, getWarehouseTransaction, assignHandler, removeHandler } = require("../warehouse");
 
-const { createOrder, getAllOrder, getOrder, updateOrder, updateOrderStatus, approveOrder, deleteOrder, UpdateOrderItem, addOrderItem, deleteOrderItem, discardOrder } = require('../order');
+const { createOrder, getAllOrder, getOrder, updateOrder, approveOrder, deleteOrder, UpdateOrderItem, addOrderItem, deleteOrderItem, discardOrder } = require('../order');
 
 const { createTransaction, getAllTransaction, getTransaction, updateTransaction, deleteTransaction, addComment } = require("../transaction");
 

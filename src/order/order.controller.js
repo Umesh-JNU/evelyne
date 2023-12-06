@@ -36,21 +36,22 @@ const includeOptions = (isIncludeTrans = true) => {
 	return [includeItems, includeUser, includeWarehouse];
 }
 
-const generateNotification = async (userNotiText, managerNotiText, order, managerId) => {
+const generateNotification = async (userNotiText, managerNotiText, order, managerId, title) => {
 	// for user
 	await notificationModel.create({
 		text: userNotiText,
 		userId: order.userId,
-		orderId: order.id
+		orderId: order.id,
+		title
 	});
 
 	// for manager
 	await notificationModel.create({
 		text: managerNotiText,
 		userId: managerId,
-		orderId: order.id
+		orderId: order.id,
+		title
 	});
-
 };
 
 const getFilledWarehouse = async (wID) => {
@@ -232,6 +233,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					};
 
 					var status = 'arrived'
+
 					break;
 
 				case 'tranship':
@@ -266,13 +268,16 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 		});
 
 		// generate notice for partial out-bound
-		// if (parentId) {
-		// 	await generateNotification(
-		// 		`Partial Out-Bound Order is created from order ${parentId} to order ${order.id}. Waiting for manager approval.`,
-		// 		`Partial Out-Bound Order is created from order ${parentId} to order ${order.id}.`,
-		// 		order,
-		// 		req.userId)
-		// }
+		if (orderType === 'arrival' || orderType === 'tranship') {
+			await generateNotification(
+				`Created new order for goods ${orderType} with order id ${order.id}.`,
+				`Created new order for goods ${orderType} with order id ${order.id}.`,
+				order,
+				req.userId,
+				"Created New Order"
+			);
+		}
+		
 		res.status(201).json({ order });
 	} catch (error) {
 		// Rollback the transaction if an error occurs
@@ -436,64 +441,68 @@ exports.discardOrder = catchAsyncError(async (req, res, next) => {
 	res.status(200).json({ message: "Order Discarded Successfully." });
 });
 
-exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
-	console.log("change status", req.body);
-	const { id } = req.params;
-	const userId = req.userId;
+// exports.updateOrderStatus = catchAsyncError(async (req, res, next) => {
+// 	console.log("change status", req.body);
+// 	const { id } = req.params;
+// 	const userId = req.userId;
 
-	const texts = {
-		"arrived": `Order number ${id} Status updated from Arrived to In-bound.`,
-		"in-bound": `Order number ${id} Status updated from In-bound to Out-bound.`,
-		"out-bound": `Order number ${id} is approved for exit. Soon this order will be dispatched.`,
-		"in-tranship": `Order number ${id} is approved for transhipment.`
-	};
+// 	const texts = {
+// 		"arrived": `Order number ${id} Status updated from Arrived to In-bound.`,
+// 		"in-bound": `Order number ${id} Status updated from In-bound to Out-bound.`,
+// 		"out-bound": `Order number ${id} is approved for exit. Soon this order will be dispatched.`,
+// 		"in-tranship": `Order number ${id} is approved for transhipment.`
+// 	};
 
-	const order = await orderModel.findByPk(id);
-	if (!order) return next(new ErrorHandler("Order not found.", 404));
+// 	const order = await orderModel.findByPk(id);
+// 	if (!order) return next(new ErrorHandler("Order not found.", 404));
 
-	const curStatus = order.status;
-	const curDateTime = new Date();
-	switch (curStatus) {
-		case "arrived":
-			order.arrival_date = curDateTime;
-			order.status = "in-bound";
-			break;
+// 	const curStatus = order.status;
+// 	const curDateTime = new Date();
+// 	let title = '';
+// 	switch (curStatus) {
+// 		case "arrived":
+// 			order.arrival_date = curDateTime;
+// 			order.status = "in-bound";
+// 			title = "Goods Arrival";
+// 			break;
 
-		case "in-bound":
-			order.inbound_date = curDateTime;
-			order.status = "out-bound";
-			break;
+// 		case "in-bound":
+// 			order.inbound_date = curDateTime;
+// 			order.status = "out-bound";
+// 			break;
 
-		case "out-bound":
-			// if(!order.parentId && !order.client_valid) {
-			// 	return next(new ErrorHandler("Can't be approved as client's validation is pending. Please wait.", 400));
-			// }
-			order.exit_date = curDateTime;
-			order.status = "exit";
-			break;
+// 		case "out-bound":
+// 			// if(!order.parentId && !order.client_valid) {
+// 			// 	return next(new ErrorHandler("Can't be approved as client's validation is pending. Please wait.", 400));
+// 			// }
+// 			order.exit_date = curDateTime;
+// 			order.status = "exit";
+// 			title = "Goods "
+// 			break;
 
-		case "in-tranship":
-			order.trans_date = curDateTime;
-			order.status = "out-tranship";
-			break;
+// 		case "in-tranship":
+// 			order.trans_date = curDateTime;
+// 			order.status = "out-tranship";
 
-		default:
-			return next(new ErrorHandler("Bad Request", 400));
-	}
+// 			break;
 
-	if (curStatus !== "in-bound") {
-		await generateNotification(texts[curStatus], texts[curStatus], order, userId);
-	}
-	await order.save();
-	res.status(200).json({ message: texts[curStatus] });
-});
+// 		default:
+// 			return next(new ErrorHandler("Bad Request", 400));
+// 	}
+
+// 	if (curStatus !== "in-bound") {
+// 		await generateNotification(texts[curStatus], texts[curStatus], order, userId);
+// 	}
+// 	await order.save();
+// 	res.status(200).json({ message: texts[curStatus] });
+// });
 
 
-const noticeText = (id) => {
+const noticeText = (id, type) => {
 	return {
 		"arrived": `Order number ${id} Status updated from Arrived to In-bound.`,
 		"in-bound": `Order number ${id} Status updated from In-bound to Out-bound.`,
-		"out-bound": `Order number ${id} is approved for exit. Soon this order will be dispatched.`,
+		"out-bound": `${type} Order with order number ${id} is approved for exit. Soon this order will be dispatched.`,
 		"in-tranship": `Order number ${id} is approved for transhipment.`
 	};
 };
@@ -539,7 +548,7 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 			await warehouse.save();
 
 			var msg = noticeText(id)[curStatus];
-			await generateNotification(msg, msg, order, userId);
+			await generateNotification(msg, msg, order, userId, "Goods Arrival");
 			break;
 
 		case "out-bound":
@@ -561,6 +570,7 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 			const items = order.get('items');
 			switch (parentOrder.status) {
 				case 'in-bound':
+					var type = "Partial";
 					for (let i in items) {
 						const { itemId, quantity } = items[i];
 						const item = await orderItemModel.findOne({ where: { id: itemId, orderId: order.parentId } });
@@ -586,6 +596,7 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 					break;
 
 				case 'out-bound':
+					var type = "Complete";
 					const isDel = await orderItemModel.destroy({ where: { orderId: order.parentId } });
 					if (!isDel) {
 						await transaction.rollback();
@@ -606,8 +617,8 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 			warehouse.filled = warehouse.filled - q;
 			await warehouse.save();
 
-			var msg = noticeText(order.parentId)[curStatus];
-			await generateNotification(msg, msg, order, userId);
+			var msg = noticeText(order.parentId, type)[curStatus];
+			await generateNotification(msg, msg, order, userId, `${type} Goods Exit`);
 			// order.exit_date = curDateTime;
 			order.status = "exit";
 			await order.save();
@@ -619,7 +630,7 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 			await order.save();
 
 			var msg = noticeText(id)[curStatus];
-			await generateNotification(msg, msg, order, userId);
+			await generateNotification(msg, msg, order, userId, "Arrival Transhipment");
 			break;
 
 		default:
