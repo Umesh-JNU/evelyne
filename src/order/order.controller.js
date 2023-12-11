@@ -40,7 +40,7 @@ const generateNotification = async (userNotiText, managerNotiText, order, manage
 	// for user
 	await notificationModel.create({
 		text: userNotiText,
-		userId: order.userId,
+		userId: order.userId ? order.userId : order.user.id,
 		orderId: order.id,
 		title
 	});
@@ -73,7 +73,7 @@ const getFilledWarehouse = async (wID) => {
 };
 
 exports.createOrder = catchAsyncError(async (req, res, next) => {
-	console.log("create Order", req.body);
+	console.log("create Order", req.body, "manager", req.userId);
 	const { warehouse, user, items, parentId, orderType } = req.body;
 
 	if (!parseInt(warehouse)) {

@@ -44,6 +44,17 @@ exports.updateNotification = catchAsyncError(async (req, res, next) => {
   res.status(200).json({ message: "Notification updated successfully." });
 })
 
+exports.marKAllRead = catchAsyncError(async (req, res, next) => {
+  console.log("marKAllRead");
+  const userId = req.userId;
+
+  const [isUpdated] = await notificationModel.update({ seen: true }, {
+    where: { userId },
+  });
+
+  res.status(200).json({ isUpdated, success: true });
+})
+
 exports.deleteNotification = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
   const isDeleted = await notificationModel.destroy({ where: { id } });
