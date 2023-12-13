@@ -18,6 +18,7 @@ const authAdmin = authRole(["admin"]);
 
 adminRoute.post("/controller", auth, authAdmin, createController);
 adminRoute.post("/manager", auth, authAdmin, createController);
+adminRoute.post("/user", auth, authAdmin, createController);
 adminRoute.get("/users", auth, authAdmin, getAllUsers);
 adminRoute.route("/user/:id")
   .get(auth, authAdmin, getUser)
