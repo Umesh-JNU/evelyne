@@ -42,7 +42,7 @@ exports.login = catchAsyncError(async (req, res, next) => {
   if (!username || !password)
     return next(new ErrorHandler("Please enter your email/mobile and password", 400));
 
-  const user = await userModel.scope("withPassword").findOne({
+  let user = await userModel.scope("withPassword").findOne({
     where: { [Op.or]: [{ email: username }, { mobile_no: username }] },
   });
   if (!user)
@@ -52,7 +52,27 @@ exports.login = catchAsyncError(async (req, res, next) => {
   if (!isPasswordMatched)
     return next(new ErrorHandler("Invalid email or password!", 401));
 
-  await sendData(user, 200, res);
+  const token = user.getJWTToken();
+  user = await userModel.findByPk(user.id, options);
+
+  if (user.userRole?.role === "manager") {
+    const warehouse = await user.getWarehouse();
+    return res.status(200).json({
+      user, token, hasWarehouse: warehouse ? true : false
+    });
+  };
+
+  if (user.userRole?.role === "controller") {
+    const warehouses = await user.getWarehouses()
+    return res.status(200).json({
+      user, token, hasWarehouse: warehouses.length > 0
+    })
+  };
+
+  res.status(200).json({
+    user,
+    token,
+  });
 });
 
 exports.getProfile = catchAsyncError(async (req, res, next) => {
