@@ -52,6 +52,38 @@ const warehouseModel = db.define(
         notNull: { msg: "Image for warehouse is required." },
       },
     },
+    countryName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: "Country Name for warehouse is required." },
+        notNull: { msg: "Country Name for warehouse is required." },
+      },
+    },
+    iso: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: "ISO for warehouse is required." },
+        notNull: { msg: "ISO for warehouse is required." },
+      },
+    },
+    symbol: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: "Currency Symbol for warehouse is required." },
+        notNull: { msg: "Currency Symbol for warehouse is required." },
+      },
+    },
+    currency: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: "Currency for warehouse is required." },
+        notNull: { msg: "Currency for warehouse is required." },
+      },
+    }
   },
   { timestamps: true }
 )

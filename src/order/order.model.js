@@ -21,9 +21,47 @@ const orderItemModel = db.define("OrderItem", {
     type: DataTypes.INTEGER,
     allowNull: false,
     validate: {
+      notNull: { msg: "Item Quantity is required" },
+      notEmpty: { msg: "Item Quantity is required" },
       isNumeric: {
         args: true,
         msg: "Quantity must be a number."
+      }
+    }
+  },
+  weight: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      notNull: { msg: "Item Weight/package is required" },
+      notEmpty: { msg: "Item Weight/package is required" },
+      isNumeric: {
+        args: true,
+        msg: "Weight must be a number."
+      }
+    }
+  },
+  value: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      notNull: { msg: "Item Value/package is required" },
+      notEmpty: { msg: "Item Value/package is required" },
+      isNumeric: {
+        args: true,
+        msg: "Value must be a number."
+      }
+    }
+  },
+  local_val: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      notNull: { msg: "Item Local Value is required" },
+      notEmpty: { msg: "Item Local Value is required" },
+      isNumeric: {
+        args: true,
+        msg: "Local Value must be a number."
       }
     }
   }
@@ -171,6 +209,9 @@ const orderModel = db.define("Order", {
     type: DataTypes.ENUM("arrived", "out-bound", "in-bound", "in-tranship", "out-tranship", "exit", "discarded"),
     defaultValue: "arrived",
   },
+  warehouseVal: {
+    type: DataTypes.INTEGER,
+  },
   parentId: {
     type: DataTypes.INTEGER,
     allowNull: true
@@ -179,6 +220,15 @@ const orderModel = db.define("Order", {
     type: DataTypes.INTEGER
   }
 }, { timestamps: true });
+    
+const includeValueAttr = [[
+  db.literal(`(
+      SELECT IFNULL(SUM(quantity * value), 0) 
+      FROM OrderItems AS item
+      WHERE	item.orderId = Order.id
+  )`),
+  'totalValue'
+]];
 
 const includeCountAttr = [
   [
@@ -297,4 +347,4 @@ orderModel.getCounts = async function (query) {
 orderModel.hasMany(orderItemModel, { foreignKey: "orderId", as: "items" });
 orderItemModel.belongsTo(orderModel, { foreignKey: "orderId", as: "order" });
 
-module.exports = { orderModel, orderItemModel, includeCountAttr };
+module.exports = { orderModel, orderItemModel, includeCountAttr, includeValueAttr };

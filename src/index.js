@@ -1,7 +1,6 @@
 const { userRoute, userModel, userController, roleModel } = require("./user");
 const { warehouseRoute, warehouseModel, warehouseController } = require("./warehouse");
 const { transactionRoute, transactionModel, transactionController } = require("./transaction");
-const { invoiceRoute, invoiceModel, invoiceController } = require("./invoice");
 const { orderRoute, orderModel, orderController } = require("./order");
 const { adminRoute, controllerRoute, managerRoute } = require("./admin");
 const { contentRoute, contentModel } = require("./staticDetails");
@@ -51,14 +50,6 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 // warehouseModel.belongsTo(userModel, { foreignKey: 'controllerId', as: 'controller' });
 
 // (async () => {
-//   await contentModel.create({
-//     "contact_no": "1234567890",
-//     "email": "evelyne@gmail.com",
-//     "about_us": "About Us",
-//     "privacy_policy": "Privacy Policy",
-//     "terms_and_cond": "Terms and Condition",
-//   });
-
 //   await roleModel.bulkCreate([
 //     {
 //       "role": "admin"
@@ -127,7 +118,8 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //     }
 //   ];
 //   for (var u in users) {
-//     await userModel.create(users[u])
+//     await userModel.create(users[u
+//     ])
 //   };
 
 //   await warehouseModel.bulkCreate([
@@ -138,7 +130,11 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "filled": "0",
 //       "image": "https://cdn0.iconfinder.com/data/icons/containers/512/palet03.png",
 //       "value": "100",
-//       "managerId": "2"
+//       "managerId": "2",
+//       "countryName": "India",
+//       "iso": "IN",
+//       "symbol": "₹",
+//       "currency": "INR"
 //     },
 //     {
 //       "name": "Warehouse 2",
@@ -146,7 +142,11 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "capacity": "1000",
 //       "filled": "0",
 //       "image": "https://cdn0.iconfinder.com/data/icons/containers/512/palet03.png",
-//       "value": "100"
+//       "value": "100",
+//       "countryName": "France",
+//       "currency": "EUR",
+//       "iso": "FR",
+//       "symbol": "€"
 //     },
 //     {
 //       "name": "Warehouse 3",
@@ -154,7 +154,11 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //       "capacity": "1000",
 //       "filled": "0",
 //       "image": "https://cdn0.iconfinder.com/data/icons/containers/512/palet03.png",
-//       "value": "100"
+//       "value": "100",
+//       "countryName": "Australia",
+//       "currency": "AUD",
+//       "iso": "AU",
+//       "symbol": "$"
 //     }
 //   ]);
 
@@ -268,62 +272,98 @@ warehouseModel.belongsToMany(userModel, { through: "UserWarehouse", as: "control
 //   await orderItemModel.bulkCreate([
 //     {
 //       "name": "rice",
-//       "quantity": "5400",
+//       "quantity": 5400,
+//       "value": 5,
+//       "weight": 20,
+//       "local_val": 100,
 //       "orderId": 1
 //     },
 //     {
 //       "name": "bags",
-//       "quantity": "100",
+//       "quantity": 100,
+//       "value": 5,
+//       "weight": 20,
+//       "local_val": 100,
 //       "orderId": 1
 //     },
 //     {
 //       "name": "rice",
-//       "quantity": "5400",
+//       "quantity": 5400,
+//       "value": 5,
+//       "weight": 20,
+//       "local_val": 100,
 //       "orderId": 2
 //     },
 //     {
 //       "name": "bags",
-//       "quantity": "20",
+//       "quantity": 20,
+//       "value": 5,
+//       "weight": 20,
+//       "local_val": 100,
 //       "orderId": 2
 //     },
 //     {
 //       "name": "tiffin box",
-//       "quantity": "50",
+//       "quantity": 50,
+//       "value": 5,
+//       "weight": 20,
+//       "local_val": 100,
 //       "orderId": 2
 //     },
 //     {
 //       "name": "water bottle ",
-//       "quantity": "50",
+//       "quantity": 50,
+//       "value": 5,
+//       "weight": 20,
+//       "local_val": 100,
 //       "orderId": 3
 //     },
 //     {
 //       "name": "wheat",
-//       "quantity": "50",
+//       "quantity": 50,
+//       "value": 5,
+//       "weight": 20,
+//       "local_val": 100,
 //       "orderId": 3
 //     },
 //     {
 //       "name": "rice",
-//       "quantity": "100",
+//       "quantity": 100,
+//       "value": 5,
+//       "weight": 20,
+//       "local_val": 100,
 //       "orderId": 3
 //     },
 //     {
 //       "name": "red chilles",
-//       "quantity": "800",
+//       "quantity": 800,
+//       "value": 5,
+//       "weight": 20,
+//       "local_val": 100,
 //       "orderId": 4
 //     },
 //     {
 //       "name": "salt",
-//       "quantity": "10000",
+//       "quantity": 10000,
+//       "value": 5,
+//       "weight": 20,
+//       "local_val": 100,
 //       "orderId": 4
 //     },
 //     {
 //       "name": "lemon",
-//       "quantity": "1000",
+//       "quantity": 1000,
+//       "value": 5,
+//       "weight": 20,
+//       "local_val": 100,
 //       "orderId": 4
 //     },
 //     {
 //       "name": "coconut",
-//       "quantity": "200",
+//       "quantity": 200,
+//       "value": 5,
+//       "weight": 20,
+//       "local_val": 100,
 //       "orderId": 4
 //     }
 //   ]);
@@ -360,7 +400,6 @@ module.exports = {
   userRoute, userModel,
   warehouseRoute, warehouseModel,
   transactionRoute, transactionModel,
-  invoiceRoute, invoiceModel,
   orderRoute, orderModel,
   adminRoute, controllerRoute, managerRoute,
   contentRoute, contentModel,

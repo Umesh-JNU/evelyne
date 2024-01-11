@@ -12,7 +12,7 @@ const { notificationModel } = require("../notifications");
 const includeItems = {
 	model: orderItemModel,
 	as: "items",
-	attributes: ["id", "name", "quantity", "itemId"],
+	attributes: ["id", "name", "quantity", "weight", "value", "local_val", "itemId"],
 };
 const includeWarehouse = {
 	model: warehouseModel,
@@ -62,14 +62,15 @@ const getFilledWarehouse = async (wID) => {
 				as: "order",
 				where: {
 					warehouseId: wID,
-					[Op.or]: [{ status: 'in-bound' }, { status: 'out-bound' }]
+					// [Op.or]: [{ status: 'in-bound' }, { status: 'out-bound' }]
+					status: 'in-bound'
 				},
 				attributes: []
 			}
 		]
 	});
 
-	return items.reduce((t, i) => { return t + i.quantity; }, 0);
+	return items.reduce((t, i) => { return t + i.quantity * i.value; }, 0);
 };
 
 exports.createOrder = catchAsyncError(async (req, res, next) => {
@@ -110,7 +111,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 				return next(new ErrorHandler("Bad Request. No Parent Order", 400));
 			}
 
-			const numItems = parentOrder.get('itemCount');;
+			const numItems = parentOrder.get('itemCount');
 			const ttlQty = parseInt(parentOrder.get('totalWeight'));
 			console.log({ parentOrder })
 			if (!req.body.exit_date) {
@@ -134,18 +135,32 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					// ------------ UPDATING PARENT ORDER END --------------------
 
 					// ------------ CREATING SUB ORDER IIEMS START ---------------------
+					for (let i = 0; i < items.length; i++) {
+						const { id, quantity, name } = items[i];
+						const whereQry = { id, orderId: parentId, quantity };
+						console.log({ whereQry });
+						const item = await orderItemModel.findOne({ where: whereQry });
+						if (!item) {
+							await transaction.rollback();
+							return next(new ErrorHandler("Bad Request. Item Not Found", 400));
+						}
 
-					// const itemsComp = parentOrder.items.map(({ name, quantity }) => {
-					// 	return { name, quantity, orderId: order.id };
-					// })
-					// await orderItemModel.bulkCreate(itemsComp, { transaction })
-
-					items.forEach((item) => {
-						item.quantity = parseInt(item.quantity);
-						item.itemId = item.id;
-						item.orderId = order.id;
-					});
-					await orderItemModel.bulkCreate(items, { transaction });
+						await orderItemModel.create({
+							name,
+							quantity,
+							value: item.get('value'),
+							weight: item.get('weight'),
+							local_val: item.get('local_val'),
+							itemId: id,
+							orderId: order.id,
+						}, { transaction });
+					}
+					// items.forEach((item) => {
+					// 	item.quantity = parseInt(item.quantity);
+					// 	item.itemId = item.id;
+					// 	item.orderId = order.id;
+					// });
+					// await orderItemModel.bulkCreate(items, { transaction });
 					// ------------ CREATING SUB ORDER IIEMS END -----------------------
 					break;
 
@@ -206,7 +221,15 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 						// 	}
 						// }
 
-						await orderItemModel.create({ itemId: id, name, quantity: out, orderId: order.id }, { transaction });
+						await orderItemModel.create({
+							name,
+							quantity: out,
+							value: item.get('value'),
+							weight: item.get('weight'),
+							local_val: item.get('local_val'),
+							itemId: id,
+							orderId: order.id,
+						}, { transaction });
 					}
 					break;
 
@@ -224,7 +247,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 					}
 
 					const filled = await getFilledWarehouse(warehouse);
-					const ttl = items.reduce((t, i) => { return t + parseInt(i.quantity); }, 0);
+					const ttl = items.reduce((t, i) => { return t + parseFloat(i.quantity) * parseFloat(i.value); }, 0);
 					console.log({ filled, ttl, cap: warehouse_.get('capacity') });
 
 					if (ttl > warehouse_.get('capacity') - filled) {
@@ -277,7 +300,7 @@ exports.createOrder = catchAsyncError(async (req, res, next) => {
 				"Created New Order"
 			);
 		}
-		
+
 		res.status(201).json({ order });
 	} catch (error) {
 		// Rollback the transaction if an error occurs
@@ -523,7 +546,7 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 
 			var warehouse = await warehouseModel.findByPk(apprBody.warehouseId);
 			const filled = await getFilledWarehouse(apprBody.warehouseId);
-			const ttl = apprBody.items.reduce((t, i) => { return t + i.quantity; }, 0);
+			const ttl = apprBody.items.reduce((t, i) => { return t + i.quantity * i.value; }, 0);
 
 			if (ttl > warehouse.get('capacity') - filled) {
 				return next(new ErrorHandler("Order can't be placed in the given warehouse. Not enough space.", 400));
@@ -534,10 +557,10 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 			})
 			console.log({ apprBody, o: order.toJSON() });
 
-			const apprOrder = await orderModel.create({ ...apprBody, parentId: id });
+			const apprOrder = await orderModel.create({ ...apprBody, parentId: id, warehouseVal: filled });
 			const apprItems = [];
-			order.items.map(({ name, quantity }) => {
-				apprItems.push({ name, quantity, orderId: apprOrder.id });
+			order.items.map(({ name, quantity, value, weight, local_val }) => {
+				apprItems.push({ name, quantity, orderId: apprOrder.id, value, weight, local_val });
 			});
 			await orderItemModel.bulkCreate(apprItems);
 
@@ -572,7 +595,7 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 				case 'in-bound':
 					var type = "Partial";
 					for (let i in items) {
-						const { itemId, quantity } = items[i];
+						const { itemId, quantity, value } = items[i];
 						const item = await orderItemModel.findOne({ where: { id: itemId, orderId: order.parentId } });
 						if (!item) {
 							return next(new ErrorHandler("Item Not Found.", 400));
@@ -612,22 +635,25 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 			}
 
 			var warehouse = await warehouseModel.findByPk(order.get('warehouseId'));
-			const q = items.reduce((t, i) => { return t + i.quantity; }, 0);
-
-			warehouse.filled = warehouse.filled - q;
-			await warehouse.save();
+			const q = items.reduce((t, i) => { return t + i.quantity * i.value; }, 0);
 
 			var msg = noticeText(order.parentId, type)[curStatus];
 			await generateNotification(msg, msg, order, userId, `${type} Goods Exit`);
 			// order.exit_date = curDateTime;
 			order.status = "exit";
+			order.warehouseVal = warehouse.filled;
 			await order.save();
+
+			warehouse.filled = warehouse.filled - q;
+			await warehouse.save();
 			break;
 
 		case "in-tranship":
-			// order.trans_date = curDateTime;
+			var warehouse = await warehouseModel.findByPk(order.get('warehouseId'));
+			const qua = items.reduce((t, i) => { return t + i.quantity * i.value; }, 0);
+			// order.exit_date = curDateTime;
 			order.status = "out-tranship";
-			await order.save();
+			order.warehouseVal = warehouse.filled;
 
 			var msg = noticeText(id)[curStatus];
 			await generateNotification(msg, msg, order, userId, "Arrival Transhipment");

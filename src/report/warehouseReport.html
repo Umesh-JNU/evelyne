@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Client Orders</title>
+  <style>
+    html {
+      zoom: 0.55;
+    }
+
+    table,
+    tr,
+    td,
+    th,
+    tbody,
+    thead,
+    tfoot {
+      page-break-inside: avoid !important;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border: 1px solid black;
+      padding: 8px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+
+<body>
+  <h1 style="text-align: center;">{{heading}}</h1>
+
+  {{#each arrivedOrders}}
+  <h2>{{client_name}}</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Date/Entry</th>
+        <th>Order ID</th>
+        <th>Declaration</th>
+        <th>Product</th>
+        <th>Total Qty</th>
+        <th>Kg/Package</th>
+        <th>Total Kgs</th>
+        <th>Value/Package ($)</th>
+        <th>Total value/$/single window rate</th>
+        <th>Total Value (local currency)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each orders}}
+      <tr>
+        <td>{{index}}</td>
+        <td>{{arrival_date}}</td>
+        <td>{{orderId}}</td>
+        <td>{{DDCOM_no}}</td>
+        <td>{{name}}</td>
+        <td>{{quantity}}</td>
+        <td>{{weight}}</td>
+        <td>{{ttlWeight}}</td>
+        <td>{{value}}</td>
+        <td>{{ttlValue}}</td>
+        <td>{{local_val}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  {{/each}}
+
+  {{#each exitOrders}}
+  <h2>{{client_name}}</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Date/Exit</th>
+        <th>Order ID</th>
+        <th>Declaration</th>
+        <th>Product</th>
+        <th>Total Qty</th>
+        <th>Kg/Package</th>
+        <th>Total Kgs</th>
+        <th>Value/Package ($)</th>
+        <th>Total value/$/single window rate</th>
+        <th>Total Value (local currency)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each orders}}
+      <tr>
+        <td>{{index}}</td>
+        <td>{{exit_date}}</td>
+        <td>{{orderId}}</td>
+        <td>{{DDCOM_no}}</td>
+        <td>{{name}}</td>
+        <td>{{quantity}}</td>
+        <td>{{weight}}</td>
+        <td>{{ttlWeight}}</td>
+        <td>{{value}}</td>
+        <td>{{ttlValue}}</td>
+        <td>{{local_val}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  {{/each}}
+
+  {{#each inTransOrders}}
+  <h2>{{client_name}}</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Date/In-Transshipment</th>
+        <th>Order ID</th>
+        <th>Declaration</th>
+        <th>Product</th>
+        <th>Total Qty</th>
+        <th>Kg/Package</th>
+        <th>Total Kgs</th>
+        <th>Value/Package ($)</th>
+        <th>Total value/$/single window rate</th>
+        <th>Total Value (local currency)</th>
+      </tr>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each orders}}
+      <tr>
+        <td>{{index}}</td>
+        <td>{{arrival_date}}</td>
+        <td>{{orderId}}</td>
+        <td>{{DDCOM_no}}</td>
+        <td>{{name}}</td>
+        <td>{{quantity}}</td>
+        <td>{{weight}}</td>
+        <td>{{ttlWeight}}</td>
+        <td>{{value}}</td>
+        <td>{{ttlValue}}</td>
+        <td>{{local_val}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  {{/each}}
+
+  {{#each outTransOrders}}
+  <h2>{{client_name}}</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Date/Out-Transshipment</th>
+        <th>Order ID</th>
+        <th>Declaration</th>
+        <th>Product</th>
+        <th>Total Qty</th>
+        <th>Kg/Package</th>
+        <th>Total Kgs</th>
+        <th>Value/Package ($)</th>
+        <th>Total value/$/single window rate</th>
+        <th>Total Value (local currency)</th>
+      </tr>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each orders}}
+      <tr>
+        <td>{{index}}</td>
+        <td>{{trans_date}}</td>
+        <td>{{orderId}}</td>
+        <td>{{DDCOM_no}}</td>
+        <td>{{name}}</td>
+        <td>{{quantity}}</td>
+        <td>{{weight}}</td>
+        <td>{{ttlWeight}}</td>
+        <td>{{value}}</td>
+        <td>{{ttlValue}}</td>
+        <td>{{local_val}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  {{/each}}
+
+</body>
+
+</html>

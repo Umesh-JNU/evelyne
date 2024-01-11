@@ -4,7 +4,7 @@ const catchAsyncError = require("../../utils/catchAsyncError")
 var pdf = require("pdf-creator-node");
 var fs = require("fs");
 const path = require('path');
-const { orderModel, orderItemModel, includeCountAttr } = require("../order/order.model");
+const { orderModel, orderItemModel, includeCountAttr, includeValueAttr } = require("../order/order.model");
 const { Op } = require("sequelize");
 const { warehouseModel } = require("../warehouse");
 const { userModel } = require("../user");
@@ -47,6 +47,8 @@ const sendReport = async (templateName, data, res) => {
   res.status(200).send(report);
 };
 
+const notNull = { [Op.ne]: null };
+
 const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
   const dt = {
     'arrival_date': 'arrival_date',
@@ -54,7 +56,7 @@ const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
     'in_trans': 'arrival_date',
     'out_trans': 'trans_date'
   }[date_type];
-  const notNull = { [Op.ne]: null };
+
   switch (date_type) {
     case 'arrival_date':
       var query = {
@@ -108,6 +110,25 @@ const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
 
   console.log({ query });
 
+  const orderItems = await orderItemModel.findAll({
+    include: [
+      {
+        model: orderModel,
+        as: "order",
+        where: {
+          warehouseId,
+          ...query
+        },
+        include: [{
+          model: userModel,
+          as: "user",
+          attributes: ["id", "fullname"]
+        }],
+        attributes: ["id", "DDCOM_no", "arrival_date", "trans_date", "exit_date", "userId"]
+      }
+    ]
+  });
+  // return orderItems;
   const orders = await orderModel.findAll({
     where: {
       warehouseId,
@@ -120,7 +141,7 @@ const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
     }, {
       model: orderItemModel,
       as: "items",
-      attributes: ["id", "name", "quantity"],
+      attributes: ["id", "name", "quantity", "value", "weight", "local_val"],
     }],
     attributes: {
       include: includeCountAttr
@@ -129,12 +150,12 @@ const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
 
   // map a particular user with thier orders
   let groupedOrders = {};
-  orders.forEach(order => {
-    const userId = order.userId;
+  orderItems.forEach(item => {
+    const userId = item.order.userId;
     if (!groupedOrders[userId]) {
       groupedOrders[userId] = [];
     }
-    groupedOrders[userId].push(order.toJSON());
+    groupedOrders[userId].push(item.toJSON());
   });
 
   // now convert into list of list of orders 
@@ -148,7 +169,11 @@ const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
     let index = 1;
     orders.forEach(order => {
       order.index = index;
-      order[dt] = order[dt].toISOString().split('T')[0]; index++;
+      order[dt] = order.order[dt].toISOString().split('T')[0]; 
+      order.DDCOM_no = order.order.DDCOM_no,
+      order.ttlValue = order.value * order.quantity,
+      order.ttlWeight = order.weight * order.quantity, 
+      index++;
     })
   });
 
@@ -158,7 +183,7 @@ const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
   //   {client_name: order1.user.fullname, orders: [order1, order2, order3],   // for user1
   // ]
   groupedOrders = groupedOrders.map(orders => {
-    return { client_name: orders[0].user.fullname, orders }
+    return { client_name: orders[0].order.user.fullname, orders }
   })
 
   console.log({ groupedOrders });
@@ -197,7 +222,8 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
   const year = parseInt(req.query.year);
   const month = parseInt(req.query.month) - 1;
   const date = req.query.date;
-  let template = "template.html";
+  let template = "warehouseReport.html";
+  // let template = "template.html";
   if (year) {
     var title = `Yearly Report - ${year}`;
     var startDate = new Date(Date.UTC(year, 0, 1));
@@ -211,7 +237,7 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
     var endDate = new Date(Date.UTC(currentYear, month + 1, 1));
   }
   else if (date) {
-    template = "daily.html";
+    // template = "daily.html";
     var title = "Daily Report";
     var startDate = new Date(date);
     startDate.setUTCHours(0, 0, 0, 0);
@@ -230,7 +256,7 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
   if (arrivedOrders.length === 0 && inTransOrders.length === 0 && outTransOrders.length === 0 && exitOrders.length === 0) {
     return next(new ErrorHandler("No orders", 400));
   }
-
+  // return res.json({arrivedOrders, inTransOrders, outTransOrders, exitOrders})
   console.log("download report", req.query);
   // return res.json({ arrivedOrders, inTransOrders, outTransOrders, exitOrders });
   await sendReport(template, { heading: title, arrivedOrders, inTransOrders, outTransOrders, exitOrders }, res);
@@ -316,73 +342,109 @@ exports.transaction = catchAsyncError(async (req, res, next) => {
 
 exports.bondReport = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
-  const { date } = req.query;
+  const { FROM, TO } = req.query;
 
-  if (!date) {
-    return next(new ErrorHandler("Please select the date.", 400));
+  if (!FROM || !TO) {
+    return next(new ErrorHandler("Please select the from and to date.", 400));
   }
 
-  const startDate = new Date(date);
+  const startDate = new Date(FROM);
   startDate.setUTCHours(0, 0, 0, 0);
-  const endDate = new Date(date);
+  const endDate = new Date(TO);
   endDate.setUTCHours(24, 0, 0, 0);
-  let transactions = await transactionModel.findAll({
+  let orders = await orderModel.findAll({
     where: {
+      status: ['arrived', 'exit'],
+      parentId: notNull,
       updatedAt: {
         [Op.gte]: startDate,
         [Op.lt]: endDate,
       },
       warehouseId: id,
-      status: 'paid',
     },
-  });
-
-  let transactionData = [];
-  transactions.forEach(transaction => {
-    console.log({ transaction })
-    transactionData.push({
-      date: new Date(date).toISOString().slice(0, 10),
-      declaration: transaction.desc,
-      value: 0,
-      debit: transaction.type === 'debit' ? transaction.amount : 0,
-      credit: transaction.type === 'credit' ? transaction.amount : 0,
-    });
-  });
-
-  transactions = await transactionModel.findAll({
-    include: [{
-      model: orderModel,
-      as: "order",
-      where: { warehouseId: id },
-      attributes: ["quantity_decl"],
-    }],
-    where: {
-      updatedAt: {
-        [Op.gte]: startDate,
-        [Op.lt]: endDate,
-      },
-      status: 'paid'
+    attributes: {
+      include: includeValueAttr
     }
   });
 
-  transactions.forEach(transaction => {
-    console.log({ transaction })
-    transactionData.push({
-      date,
-      declaration: transaction.desc,
-      value: 0,
-      debit: transaction.type === 'debit' ? transaction.amount : 0,
-      credit: transaction.type === 'credit' ? transaction.amount : 0,
+  const warehouse = await warehouseModel.findByPk(id);
+  if (!warehouse) {
+    return next(new ErrorHandler("Warehouse not found", 400));
+  }
+
+  if (orders.length <= 0) {
+    return next(new ErrorHandler("No Order arrived / exit for given dates.", 400));
+  }
+
+  let valueData = [];
+  let value = orders[0].warehouseVal === 0 ? warehouse.capacity : orders[0].warehouseVal;
+  const initialVal = value;
+  orders.forEach(order => {
+    const ttlVal = parseFloat(order.get('totalValue'));
+    value = order.status === 'arrived' ? value - ttlVal : value + ttlVal;
+    // console.log({ order })
+    // console.log({ w: order.warehouseVal, t: parseFloat(order.get('totalValue')), }, order.get('totalValue'))
+    valueData.push({
+      date: new Date(order.updatedAt).toISOString().slice(0, 10),
+      id: order.parentId,
+      declaration: order.DDCOM_no,
+      value: value,
+      debit: order.status === 'arrived' ? ttlVal : 0,
+      credit: order.status === 'exit' ? ttlVal : 0,
     });
   });
 
-  if (transactionData.length === 0) {
-    return next(new ErrorHandler("No Transaction Today.", 400));
-  };
+  // return res.json({ valueData })
+  console.log({ valueData })
 
-  console.log({ transactionData })
+  await sendReport('bondReport.html', { heading: 'Bond Report', data: valueData, name: warehouse.name, capacity: initialVal }, res);
 
-  await sendReport('bondReport.html', { heading: 'Bond Report', data: transactionData }, res);
+  // let transactionData = [];
+  // transactions.forEach(transaction => {
+  //   console.log({ transaction })
+  //   transactionData.push({
+  //     date: new Date(date).toISOString().slice(0, 10),
+  //     declaration: transaction.desc,
+  //     value: 0,
+  //     debit: transaction.type === 'debit' ? transaction.amount : 0,
+  //     credit: transaction.type === 'credit' ? transaction.amount : 0,
+  //   });
+  // });
+
+  // transactions = await transactionModel.findAll({
+  //   include: [{
+  //     model: orderModel,
+  //     as: "order",
+  //     where: { warehouseId: id },
+  //     attributes: ["quantity_decl"],
+  //   }],
+  //   where: {
+  //     updatedAt: {
+  //       [Op.gte]: startDate,
+  //       [Op.lt]: endDate,
+  //     },
+  //     status: 'paid'
+  //   }
+  // });
+
+  // transactions.forEach(transaction => {
+  //   console.log({ transaction })
+  //   transactionData.push({
+  //     date,
+  //     declaration: transaction.desc,
+  //     value: 0,
+  //     debit: transaction.type === 'debit' ? transaction.amount : 0,
+  //     credit: transaction.type === 'credit' ? transaction.amount : 0,
+  //   });
+  // });
+
+  // if (transactionData.length === 0) {
+  //   return next(new ErrorHandler("No Transaction Today.", 400));
+  // };
+
+  // console.log({ transactionData })
+
+  // await sendReport('bondReport.html', { heading: 'Bond Report', data: transactionData }, res);
 })
 
 exports.getOrderPDF = catchAsyncError(async (req, res, next) => {

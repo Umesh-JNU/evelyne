@@ -1,9 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const { auth, authRole } = require("../../middlewares/auth");
-const { getAllContent, getContent } = require("./content.controller");
+const { getTT, getPP, getAboutUs, getContactUs } = require("./content.controller");
 
-router.get("/", getAllContent);
-router.get("/:id", getContent);
+router.get("/terms_and_conditions", getTT);
+router.get("/privacy_policy", getPP);
+router.get("/about_us", getAboutUs);
+router.get("/contact_us", getContactUs);
 
 module.exports = router;

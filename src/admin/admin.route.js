@@ -4,7 +4,7 @@ const { warehouse, order } = require("../../middlewares/validate");
 
 const { createController, getAllUsers, getUser, updateUser, deleteUser } = require('./admin.controller').userController;
 
-const { createContent, updateContent, deleteContent } = require("../staticDetails");
+const { createUpdateContent, getContent } = require("../staticDetails");
 
 const { createWarehouse, updateWarehouse, deleteWarehouse, myWarehouse, housesAndOrderCount, warehouseAndAllOrders, getWarehouseOrder, housesAndTransactionCount, getWarehouseTransaction, assignHandler, removeHandler } = require("../warehouse");
 
@@ -25,10 +25,9 @@ adminRoute.route("/user/:id")
   .put(auth, authAdmin, updateUser)
   .delete(auth, authAdmin, deleteUser);
 
-adminRoute.post("/content", auth, authAdmin, createContent);
-adminRoute.route("/content/:id")
-  .put(auth, authAdmin, updateContent)
-  .delete(auth, authAdmin, deleteContent);
+adminRoute.route("/content")
+  .post(auth, authAdmin, createUpdateContent)
+  .get(auth, authAdmin, getContent);
 
 adminRoute.post("/warehouse", auth, authAdmin, createWarehouse);
 adminRoute.put("/warehouse/assign", warehouse.assign, auth, authAdmin, assignHandler);

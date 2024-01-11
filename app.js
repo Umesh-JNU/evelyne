@@ -8,7 +8,7 @@ const app = express();
 https://evelyne-api.adaptable.app/api/
 */}
 
-const path = "./config/config.env"
+const path = "./config/config.env";
 // const path = "./config/local.env";
 
 dotenv.config({ path });
@@ -24,13 +24,12 @@ app.use(
 
 app.get("/", (req, res, next) => res.json({ message: "Server is running" }));
 
-const { userRoute, warehouseRoute, transactionRoute, invoiceRoute, orderRoute, adminRoute, controllerRoute, managerRoute, contentRoute } = require("./src");
+const { userRoute, warehouseRoute, transactionRoute, orderRoute, adminRoute, controllerRoute, managerRoute, contentRoute } = require("./src");
 const reportRoute = require("./src/report/report.route");
 const { notificationRoute } = require("./src/notifications");
 app.use("/api/user", userRoute);
 app.use("/api/warehouse", warehouseRoute);
 app.use("/api/transaction", transactionRoute);
-app.use("/api/invoice", invoiceRoute);
 app.use("/api/order", orderRoute);
 app.use("/api/admin", adminRoute);
 app.use("/api/controller", controllerRoute);

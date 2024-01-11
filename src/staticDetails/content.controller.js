@@ -1,51 +1,68 @@
 const ErrorHandler = require("../../utils/errorHandler")
 const catchAsyncError = require("../../utils/catchAsyncError")
-const getFormattedQuery = require("../../utils/apiFeatures");
 const contentModel = require("./content.model");
 
-exports.createContent = catchAsyncError(async (req, res, next) => {
+exports.createUpdateContent = catchAsyncError(async (req, res, next) => {
 	console.log("create content", req.body);
 
-	const content = await contentModel.create(req.body);
+	let content = await contentModel.findAll();
+	if (content && content.length === 0) {
+		content = await contentModel.create(req.body);
+	} else {
+		[_, content] = await contentModel.update(req.body, { where: {}, returning: true });
+	}
+
 	res.status(201).json({ content });
 })
 
-exports.getAllContent = catchAsyncError(async (req, res, next) => {
-	const contents = await contentModel.findAll({});
-	if(contents.length <= 0) {
-		return next(new ErrorHandler("No Contents. Please add.", 404));
-	}
-	res.status(200).json({ contents: contents[0] });
-})
-
 exports.getContent = catchAsyncError(async (req, res, next) => {
-	console.log("get content");
-	const { id } = req.params;
-	const content = await contentModel.findByPk(id);
-
-	if (!content) return next(new ErrorHandler("Content not found", 404));
-
+	console.log("getContent");
+	const content = await contentModel.findOne();
 	res.status(200).json({ content });
-})
+});
 
-exports.updateContent = catchAsyncError(async (req, res, next) => {
-	console.log("update content", req.body);
-	const { id } = req.params;
+// ------------------------ FOR USER / MANAGER / CONTROLLER --------------
+const message = {
+	terms_and_cond: "Terms & Condition not found.",
+	privacy_policy: "Privacy Policy not found.",
+	about_us: "About Us not found.",
+	contact_us: "Contact Us not found."
+};
 
-	const [_, content] = await contentModel.update(req.body, {
-		where: { id },
-		returning: true, // Return the updated content object
-	});
+const findContent = async (next, key) => {
+	const content = await contentModel.findOne();
+	if (!content) {
+		return next(new ErrorHandler(message[key], 404));
+	}
 
-	if (content === 0) return next(new ErrorHandler("Content not found.", 404));
+	return content;
+};
 
-	res.status(200).json({ message: "Content updated successfully.", content });
-})
+exports.getTT = catchAsyncError(async (req, res, next) => {
+	console.log("getTT");
+	const content = await findContent(next, 'terms_and_cond');
 
-exports.deleteContent = catchAsyncError(async (req, res, next) => {
-	const { id } = req.params;
-	const content = await contentModel.destroy({ where: { id } });
-	if (content === 0) return next(new ErrorHandler("Content not found.", 404));
+	res.status(200).send(content.terms_and_cond);
+});
 
-	res.status(200).json({ message: "Content Deleted Successfully.", content });
-})
+exports.getPP = catchAsyncError(async (req, res, next) => {
+	console.log("getPP");
+	const content = await findContent(next, 'privacy_policy');
+
+	res.status(200).send(content.privacy_policy);
+});
+
+exports.getAboutUs = catchAsyncError(async (req, res, next) => {
+	console.log("getAboutUs");
+	const content = await findContent(next, 'about_us');
+
+	res.status(200).send(content.about_us);
+});
+
+exports.getContactUs = catchAsyncError(async (req, res, next) => {
+	console.log("getContactUs");
+	const content = await findContent(next, 'contact_us');
+
+	res.status(200).json({ email: content.email, contact_no: content.contact_no });
+});
+
