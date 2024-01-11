@@ -42,21 +42,21 @@ exports.getTT = catchAsyncError(async (req, res, next) => {
 	console.log("getTT");
 	const content = await findContent(next, 'terms_and_cond');
 
-	res.status(200).send(content.terms_and_cond);
+	res.status(200).json({ success: true, data: content.terms_and_cond });
 });
 
 exports.getPP = catchAsyncError(async (req, res, next) => {
 	console.log("getPP");
 	const content = await findContent(next, 'privacy_policy');
 
-	res.status(200).send(content.privacy_policy);
+	res.status(200).json({ success: true, data: content.privacy_policy });
 });
 
 exports.getAboutUs = catchAsyncError(async (req, res, next) => {
 	console.log("getAboutUs");
 	const content = await findContent(next, 'about_us');
 
-	res.status(200).send(content.about_us);
+	res.status(200).json({ success: true, data: content.about_us });
 });
 
 exports.getContactUs = catchAsyncError(async (req, res, next) => {
