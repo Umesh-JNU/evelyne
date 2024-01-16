@@ -117,9 +117,10 @@ userModel.beforeSave(async (user, options) => {
   }
 });
 userModel.prototype.getJWTToken = function () {
-  return jwt.sign({ userId: this.id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_TOKEN_EXPIRE,
-  });
+  return jwt.sign({ userId: this.id }, process.env.JWT_SECRET);
+  //   return jwt.sign({ userId: this.id }, process.env.JWT_SECRET, {
+  //     expiresIn: process.env.JWT_TOKEN_EXPIRE,
+  //   });
 };
 
 userModel.prototype.comparePassword = async function (enteredPassword) {
@@ -148,17 +149,17 @@ userModel.getUpdateFields = function (userData) {
 };
 
 userModel.getHandler = async function (userId, next) {
-	const handler = await this.findByPk(userId, {
-		include: [{
-			model: roleModel,
-			as: "userRole",
-			attributes: ["role"]
-		}],
-	});
+  const handler = await this.findByPk(userId, {
+    include: [{
+      model: roleModel,
+      as: "userRole",
+      attributes: ["role"]
+    }],
+  });
 
-	if (!handler) return next(new ErrorHandler("User with specified role not found.", 404));
+  if (!handler) return next(new ErrorHandler("User with specified role not found.", 404));
 
-	return handler;
+  return handler;
 };
 
 const roleModel = db.define(
@@ -193,7 +194,7 @@ const otpModel = db.define(
 
 otpModel.prototype.isValid = async function (givenOTP) {
   const user = await userModel.findByPk(this.userId);
-  if(!user) return false;
+  if (!user) return false;
 
   const otpValidityDuration = 15 * 60 * 1000; // 15 minutes in milliseconds
   const currentTime = new Date().getTime();

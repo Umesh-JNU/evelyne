@@ -111,10 +111,7 @@ exports.myWarehouse = catchAsyncError(async (req, res, next) => {
 
 		case "manager":
 			return res.status(200).json({
-				warehouse:
-					await handler.getWarehouse({
-						attributes: ["id", "name", "desc", "image", "capacity", "filled"]
-					})
+				warehouse: await handler.getWarehouse()
 			});
 
 		default:

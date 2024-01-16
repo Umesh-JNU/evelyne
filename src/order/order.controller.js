@@ -649,8 +649,9 @@ exports.approveOrder = catchAsyncError(async (req, res, next) => {
 			break;
 
 		case "in-tranship":
+			const transhipItems = order.get('items');
 			var warehouse = await warehouseModel.findByPk(order.get('warehouseId'));
-			const qua = items.reduce((t, i) => { return t + i.quantity * i.value; }, 0);
+			const qua = transhipItems.reduce((t, i) => { return t + i.quantity * i.value; }, 0);
 			// order.exit_date = curDateTime;
 			order.status = "out-tranship";
 			order.warehouseVal = warehouse.filled;
