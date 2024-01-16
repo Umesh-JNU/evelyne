@@ -17,7 +17,7 @@ const templateHtml = (templateName) => {
 }
 
 const options = {
-  format: "A3",
+  format: "A4",
   orientation: "portrait",
   border: "10mm",
   // header: {
@@ -169,11 +169,11 @@ const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
     let index = 1;
     orders.forEach(order => {
       order.index = index;
-      order[dt] = order.order[dt].toISOString().split('T')[0]; 
+      order[dt] = order.order[dt].toISOString().split('T')[0];
       order.DDCOM_no = order.order.DDCOM_no,
-      order.ttlValue = order.value * order.quantity,
-      order.ttlWeight = order.weight * order.quantity, 
-      index++;
+        order.ttlValue = order.value * order.quantity,
+        order.ttlWeight = order.weight * order.quantity,
+        index++;
     })
   });
 
@@ -222,6 +222,8 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
   const year = parseInt(req.query.year);
   const month = parseInt(req.query.month) - 1;
   const date = req.query.date;
+
+  console.log({ month, date, year })
   let template = "warehouseReport.html";
   // let template = "template.html";
   if (year) {
@@ -230,7 +232,7 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
     var endDate = new Date(Date.UTC(year + 1, 0, 1));
     console.log({ startDate, endDate });
   }
-  else if (month) {
+  else if (month >= 0) {
     var title = `Monthly Report - ${new Date(0, month).toLocaleString('en', { month: 'long' })}`;
     const currentYear = new Date().getFullYear();
     var startDate = new Date(Date.UTC(currentYear, month, 1));
