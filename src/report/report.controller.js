@@ -361,20 +361,29 @@ exports.bondReport = catchAsyncError(async (req, res, next) => {
   startDate.setUTCHours(0, 0, 0, 0);
   const endDate = new Date(TO);
   endDate.setUTCHours(24, 0, 0, 0);
-  let orders = await orderModel.findAll({
-    where: {
-      status: ['arrived', 'exit'],
-      parentId: notNull,
-      updatedAt: {
-        [Op.gte]: startDate,
-        [Op.lt]: endDate,
+
+  const getOrder = async (dateKey, isParent, status) => {
+    return await orderModel.findAll({
+      where: {
+        status,
+        ...isParent,
+        [dateKey]: {
+          [Op.gte]: startDate,
+          [Op.lt]: endDate,
+        },
+        warehouseId: id,
       },
-      warehouseId: id,
-    },
-    attributes: {
-      include: includeValueAttr
-    }
-  });
+      attributes: {
+        include: includeValueAttr
+      }
+    });
+  };
+
+  const arrivalOrders = await getOrder("arrival_date", { parentId: notNull }, 'arrived');
+  const exitOrders = await getOrder("exit_date", { parentId: notNull }, 'exit');
+  const transOrders = await getOrder("trans_date", {}, 'out-tranship');
+
+  let orders = [...arrivalOrders, ...exitOrders, ...transOrders];
 
   const warehouse = await warehouseModel.findByPk(id);
   if (!warehouse) {
@@ -382,79 +391,74 @@ exports.bondReport = catchAsyncError(async (req, res, next) => {
   }
 
   if (orders.length <= 0) {
-    return next(new ErrorHandler("No Order arrived / exit for given dates.", 400));
+    return next(new ErrorHandler("No Order arrived / exit / tranship for given dates.", 400));
   }
 
-  let valueData = [];
+  const keyMap = {
+    arrived: 'arrival_date',
+    exit: 'exit_date',
+    "out-tranship": 'trans_date',
+  };
+  orders = orders.map(order => ({
+    status: order.status,
+    ttlVal: parseFloat(order.get('totalValue')),
+    declaration: order.DDCOM_no,
+    warehouseVal: order.warehouseVal,
+    date: order[keyMap[order.status]],
+    id: order.status === 'out-tranship' ? order.id : order.parentId
+  }));
+
+  orders.sort((o1, o2) => new Date(o1.date) - new Date(o2.date));
+
   let value = warehouse.capacity - orders[0].warehouseVal;
   const initialVal = value;
+  let valueData = [];
+
   orders.forEach(order => {
-    const ttlVal = parseFloat(order.get('totalValue'));
-    value = order.status === 'arrived' ? value - ttlVal : value + ttlVal;
-    // console.log({ order })
-    // console.log({ w: order.warehouseVal, t: parseFloat(order.get('totalValue')), }, order.get('totalValue'))
-    valueData.push({
-      date: new Date(order.updatedAt).toISOString().slice(0, 10),
-      id: order.parentId,
-      declaration: order.DDCOM_no,
-      value: value,
-      credit: order.status === 'arrived' ? ttlVal : 0,
-      debit: order.status === 'exit' ? ttlVal : 0,
-    });
+    order.date = new Date(order.date).toISOString().slice(0, 10);
+    switch (order.status) {
+      case 'arrived':
+        value -= order.ttlVal;
+        valueData.push({
+          ...order,
+          value: value,
+          credit: order.ttlVal,
+          debit: 0
+        });
+        break;
+
+      case 'exit':
+        value += order.ttlVal;
+        valueData.push({
+          ...order,
+          value: value,
+          credit: 0,
+          debit: order.ttlVal
+        });
+        break;
+
+      case 'out-tranship':
+        valueData.push({
+          ...order,
+          value: value - order.ttlVal,
+          credit: order.ttlVal,
+          debit: 0
+        });
+        valueData.push({
+          ...order,
+          value: value,
+          credit: 0,
+          debit: order.ttlVal
+        });
+        break;
+
+      default:
+        break;
+    }
   });
 
-  // return res.json({ valueData })
-  console.log({ valueData })
-
   await sendReport('bondReport.html', { heading: 'Bond Report', data: valueData, name: warehouse.name, capacity: initialVal }, res);
-
-  // let transactionData = [];
-  // transactions.forEach(transaction => {
-  //   console.log({ transaction })
-  //   transactionData.push({
-  //     date: new Date(date).toISOString().slice(0, 10),
-  //     declaration: transaction.desc,
-  //     value: 0,
-  //     debit: transaction.type === 'debit' ? transaction.amount : 0,
-  //     credit: transaction.type === 'credit' ? transaction.amount : 0,
-  //   });
-  // });
-
-  // transactions = await transactionModel.findAll({
-  //   include: [{
-  //     model: orderModel,
-  //     as: "order",
-  //     where: { warehouseId: id },
-  //     attributes: ["quantity_decl"],
-  //   }],
-  //   where: {
-  //     updatedAt: {
-  //       [Op.gte]: startDate,
-  //       [Op.lt]: endDate,
-  //     },
-  //     status: 'paid'
-  //   }
-  // });
-
-  // transactions.forEach(transaction => {
-  //   console.log({ transaction })
-  //   transactionData.push({
-  //     date,
-  //     declaration: transaction.desc,
-  //     value: 0,
-  //     debit: transaction.type === 'debit' ? transaction.amount : 0,
-  //     credit: transaction.type === 'credit' ? transaction.amount : 0,
-  //   });
-  // });
-
-  // if (transactionData.length === 0) {
-  //   return next(new ErrorHandler("No Transaction Today.", 400));
-  // };
-
-  // console.log({ transactionData })
-
-  // await sendReport('bondReport.html', { heading: 'Bond Report', data: transactionData }, res);
-})
+});
 
 exports.getOrderPDF = catchAsyncError(async (req, res, next) => {
   console.log({ q: req.query })
