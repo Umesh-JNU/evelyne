@@ -49,7 +49,7 @@ const sendReport = async (templateName, data, res) => {
 
 const notNull = { [Op.ne]: null };
 
-const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
+const getOrdersJSON = async (date_type, warehouseId, startDate, endDate, symbol) => {
   const dt = {
     'arrival_date': 'arrival_date',
     'exit_date': 'exit_date',
@@ -108,7 +108,7 @@ const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
       throw new ErrorHandler('Something Went Wrong', 500);
   }
 
-  console.log({ query });
+  console.log({ query, warehouseModel });
 
   const orderItems = await orderItemModel.findAll({
     include: [
@@ -173,6 +173,7 @@ const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
       order.DDCOM_no = order.order.DDCOM_no,
         order.ttlValue = order.value * order.quantity,
         order.ttlWeight = order.weight * order.quantity,
+        order.local_val = order.local_val * order.quantity,
         index++;
     })
   });
@@ -183,7 +184,9 @@ const getOrdersJSON = async (date_type, warehouseId, startDate, endDate) => {
   //   {client_name: order1.user.fullname, orders: [order1, order2, order3],   // for user1
   // ]
   groupedOrders = groupedOrders.map(orders => {
-    return { client_name: orders[0].order.user.fullname, orders }
+    console.log({ orders })
+
+    return { client_name: orders[0].order.user.fullname, orders, symbol }
   })
 
   console.log({ groupedOrders });
@@ -219,6 +222,10 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
   if (!id)
     return next(new ErrorHandler("Please provide the warehouseId", 400));
 
+  const warehouse = await warehouseModel.findByPk(id);
+  if (!warehouse) {
+    return next(new ErrorHandler("Warehouse Not Found", 404));
+  }
   const year = parseInt(req.query.year);
   const month = parseInt(req.query.month) - 1;
   const date = req.query.date;
@@ -250,10 +257,10 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Bad Request", 400));
   }
 
-  const arrivedOrders = await getOrdersJSON('arrival_date', id, startDate, endDate);
-  const inTransOrders = await getOrdersJSON('in_trans', id, startDate, endDate);
-  const outTransOrders = await getOrdersJSON('out_trans', id, startDate, endDate);
-  const exitOrders = await getOrdersJSON('exit_date', id, startDate, endDate);
+  const arrivedOrders = await getOrdersJSON('arrival_date', id, startDate, endDate, warehouse.symbol);
+  const inTransOrders = await getOrdersJSON('in_trans', id, startDate, endDate, warehouse.symbol);
+  const outTransOrders = await getOrdersJSON('out_trans', id, startDate, endDate, warehouse.symbol);
+  const exitOrders = await getOrdersJSON('exit_date', id, startDate, endDate, warehouse.symbol);
 
   if (arrivedOrders.length === 0 && inTransOrders.length === 0 && outTransOrders.length === 0 && exitOrders.length === 0) {
     return next(new ErrorHandler("No orders", 400));
@@ -379,7 +386,7 @@ exports.bondReport = catchAsyncError(async (req, res, next) => {
   }
 
   let valueData = [];
-  let value = orders[0].warehouseVal === 0 ? warehouse.capacity : orders[0].warehouseVal;
+  let value = warehouse.capacity - orders[0].warehouseVal;
   const initialVal = value;
   orders.forEach(order => {
     const ttlVal = parseFloat(order.get('totalValue'));
@@ -391,8 +398,8 @@ exports.bondReport = catchAsyncError(async (req, res, next) => {
       id: order.parentId,
       declaration: order.DDCOM_no,
       value: value,
-      debit: order.status === 'arrived' ? ttlVal : 0,
-      credit: order.status === 'exit' ? ttlVal : 0,
+      credit: order.status === 'arrived' ? ttlVal : 0,
+      debit: order.status === 'exit' ? ttlVal : 0,
     });
   });
 

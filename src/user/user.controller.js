@@ -183,3 +183,10 @@ exports.verifyOTP = catchAsyncError(async (req, res, next) => {
     message: "OTP verified successfully.", userId: otpInstance.userId
   });
 });
+
+exports.deleteAccount = catchAsyncError(async (req, res, next) => {
+  const userId = req.userId;
+  console.log("delete account", { userId })
+  await userModel.destroy({ where: { id: userId } });
+  res.status(200).json({ message: "User Deleted Successfully." });
+})

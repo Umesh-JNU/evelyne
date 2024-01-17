@@ -3,6 +3,7 @@ const catchAsyncError = require("../../utils/catchAsyncError");
 const { userModel, roleModel } = require("../user");
 const getFormattedQuery = require("../../utils/apiFeatures");
 const { warehouseModel } = require("../warehouse");
+const { Op } = require("sequelize");
 
 const includeRole = (role) => {
   const roleObj = {
@@ -11,7 +12,7 @@ const includeRole = (role) => {
     attributes: ["role"]
   };
 
-  return role ? { ...roleObj, where: { role } } : roleObj;
+  return role ? { ...roleObj, where: { role } } : { ...roleObj, where: { role: { [Op.ne]: "admin" } } };
 };
 
 const includeWarehouse = {
@@ -102,7 +103,8 @@ exports.userController = {
       ...query,
       include: includeOptions(role),
       attributes: { exclude: ["roleId"] },
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
+      paranoid: false,
     });
 
     res.status(200).json({ users, usersCount: users.length });
@@ -115,7 +117,8 @@ exports.userController = {
 
     const user = await userModel.findByPk(id, {
       include: includeOptions(role),
-      attributes: { exclude: ["roleId"] }
+      attributes: { exclude: ["roleId"] },
+      paranoid: false,
     });
 
     if (!user) return next(new ErrorHandler("User not found", 404));
@@ -142,10 +145,25 @@ exports.userController = {
     res.status(200).json({ message: "User updated successfully.", isUpdated });
   }),
 
+  unDeleteUser: catchAsyncError(async (req, res, next) => {
+    const { id } = req.params;
+    console.log("un delete user id", { id })
+    const result = await userModel.update(
+      { deletedAt: null },
+      { where: { id }, paranoid: false }
+    );
+    console.log({ result })
+    if (result[0] === 0) {
+      return next(new ErrorHandler("User Not Found", 404));
+    }
+
+    res.status(200).json({ message: "User Re-created Successfully." });
+  }),
+
   deleteUser: catchAsyncError(async (req, res, next) => {
     const { id } = req.params;
     console.log("delete user id", { id })
     await userModel.destroy({ where: { id } });
-    res.status(204).json({ message: "User Deleted Successfully." });
+    res.status(200).json({ message: "User Deleted Successfully." });
   })
 }

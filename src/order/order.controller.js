@@ -23,6 +23,7 @@ const includeUser = {
 	model: userModel,
 	as: "user",
 	attributes: ["id", "fullname", "avatar"],
+	paranoid: false,
 };
 const includeTransaction = {
 	model: transactionModel,

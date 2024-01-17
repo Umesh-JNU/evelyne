@@ -2,7 +2,7 @@ const express = require('express');
 const { auth, authRole } = require("../../middlewares/auth");
 const { warehouse, order } = require("../../middlewares/validate");
 
-const { createController, getAllUsers, getUser, updateUser, deleteUser } = require('./admin.controller').userController;
+const { createController, getAllUsers, getUser, updateUser, deleteUser, unDeleteUser } = require('./admin.controller').userController;
 
 const { createUpdateContent, getContent } = require("../staticDetails");
 
@@ -20,6 +20,8 @@ adminRoute.post("/controller", auth, authAdmin, createController);
 adminRoute.post("/manager", auth, authAdmin, createController);
 adminRoute.post("/user", auth, authAdmin, createController);
 adminRoute.get("/users", auth, authAdmin, getAllUsers);
+adminRoute.put("/user/:id/undelete", auth, authAdmin, unDeleteUser);
+
 adminRoute.route("/user/:id")
   .get(auth, authAdmin, getUser)
   .put(auth, authAdmin, updateUser)

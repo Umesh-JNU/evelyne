@@ -99,7 +99,8 @@ const userModel = db.define(
     timestamps: true,
     paranoid: true,
     defaultScope: {
-      attributes: { exclude: ["password", "deletedAt"] },
+      // attributes: { exclude: ["password", "deletedAt"] },
+      attributes: { exclude: ["password"] },
     },
     scopes: {
       withPassword: {
