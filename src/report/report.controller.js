@@ -122,7 +122,8 @@ const getOrdersJSON = async (date_type, warehouseId, startDate, endDate, symbol)
         include: [{
           model: userModel,
           as: "user",
-          attributes: ["id", "fullname"]
+          attributes: ["id", "fullname"],
+          paranoid: false
         }],
         attributes: ["id", "DDCOM_no", "arrival_date", "trans_date", "exit_date", "userId"]
       }
@@ -288,7 +289,8 @@ exports.trackOrder = catchAsyncError(async (req, res, next) => {
       include: [{
         model: userModel,
         as: "manager",
-        attributes: ["id", "fullname"]
+        attributes: ["id", "fullname"],
+        paranoid: false
       }],
       attributes: ["id", "name", "image"],
     },
@@ -296,6 +298,7 @@ exports.trackOrder = catchAsyncError(async (req, res, next) => {
       model: userModel,
       as: "user",
       attributes: ["id", "fullname"],
+      paranoid: false
     },
     {
       model: transactionModel,
@@ -324,7 +327,8 @@ exports.transaction = catchAsyncError(async (req, res, next) => {
       include: [{
         model: userModel,
         as: "user",
-        attributes: ["id", "fullname"]
+        attributes: ["id", "fullname"],
+        paranoid: false,
       }, {
         model: warehouseModel,
         as: "warehouse",
@@ -332,7 +336,8 @@ exports.transaction = catchAsyncError(async (req, res, next) => {
         include: [{
           model: userModel,
           as: "manager",
-          attributes: ["id", "fullname"]
+          attributes: ["id", "fullname"],
+          paranoid: false
         }]
       }],
       attributes: ["id", "status"]
@@ -490,7 +495,8 @@ exports.getOrderPDF = catchAsyncError(async (req, res, next) => {
         model: userModel,
         as: "manager",
         where: { id: userId },
-        attributes: ["id", "fullname"]
+        attributes: ["id", "fullname"],
+        paranoid: false
       }],
       attributes: ["id", "name", "image"],
     },
@@ -498,6 +504,7 @@ exports.getOrderPDF = catchAsyncError(async (req, res, next) => {
       model: userModel,
       as: "user",
       attributes: ["id", "fullname"],
+      paranoid: false
     }],
     attributes: {
       include: includeCountAttr,

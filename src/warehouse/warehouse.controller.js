@@ -12,6 +12,7 @@ const includeOptions = [{
 	model: userModel,
 	as: "manager",
 	attributes: ["id", "fullname"],
+	paranoid: false
 }];
 
 exports.createWarehouse = catchAsyncError(async (req, res, next) => {
@@ -32,6 +33,7 @@ exports.getAllWarehouse = catchAsyncError(async (req, res, next) => {
 			model: userModel,
 			as: "controller",
 			attributes: ["id", "fullname"],
+			paranoid: false,
 			through: { attributes: [] }
 		}],
 		attributes: { exclude: ["controllerId", "managerId"] },
@@ -127,7 +129,8 @@ exports.housesAndOrderCount = catchAsyncError(async (req, res, next) => {
 		include: [{
 			model: userModel,
 			as: 'manager',
-			attributes: ['id', 'fullname']
+			attributes: ['id', 'fullname'],
+			paranoid: false
 		}],
 		attributes: { exclude: ["managerId"] }
 	});
@@ -153,7 +156,8 @@ exports.getWarehouseOrder = catchAsyncError(async (req, res, next) => {
 				include: [{
 					model: userModel,
 					as: "manager",
-					attributes: ["id", "fullname"]
+					attributes: ["id", "fullname"],
+					paranoid: false
 				}],
 				attributes: { exclude: ["managerId"] }
 			});
@@ -193,7 +197,8 @@ exports.warehouseAndAllOrders = catchAsyncError(async (req, res, next) => {
 		include: [{
 			model: userModel,
 			as: "manager",
-			attributes: ["id", "fullname"]
+			attributes: ["id", "fullname"],
+			paranoid: false
 		}],
 		attributes: { exclude: ["managerId"] }
 	});
@@ -225,7 +230,8 @@ exports.housesAndTransactionCount = catchAsyncError(async (req, res, next) => {
 		include: [{
 			model: userModel,
 			as: 'manager',
-			attributes: ['id', 'fullname']
+			attributes: ['id', 'fullname'],
+			paranoid: false
 		}],
 		attributes: { exclude: ["managerId"] }
 	});
@@ -252,7 +258,8 @@ exports.getWarehouseTransaction = catchAsyncError(async (req, res, next) => {
 				include: [{
 					model: userModel,
 					as: "manager",
-					attributes: ["id", "fullname"]
+					attributes: ["id", "fullname"],
+					paranoid: false
 				}],
 				attributes: { exclude: ["managerId"] }
 			});

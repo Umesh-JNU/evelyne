@@ -381,7 +381,8 @@ exports.getOrder = catchAsyncError(async (req, res, next) => {
 					include: {
 						model: userModel,
 						as: 'manager',
-						attributes: ['id', 'fullname']
+						attributes: ['id', 'fullname'],
+						paranoid: false
 					}
 				}],
 			attributes: {
