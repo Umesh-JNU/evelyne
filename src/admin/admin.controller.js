@@ -99,15 +99,20 @@ exports.userController = {
     const query = getFormattedQuery("fullname", req.query);
     const { role } = req.query;
 
-    const users = await userModel.findAll({
+    const countQry = {
       ...query,
       include: includeOptions(role),
+      paranoid: false,
+    };
+    
+    const usersCount = await userModel.count({ ...countQry });
+    const users = await userModel.findAll({
+      ...countQry,
       attributes: { exclude: ["roleId"] },
       order: [['createdAt', 'DESC']],
-      paranoid: false,
     });
 
-    res.status(200).json({ users, usersCount: users.length });
+    res.status(200).json({ users, usersCount });
   }),
 
   getUser: catchAsyncError(async (req, res, next) => {
