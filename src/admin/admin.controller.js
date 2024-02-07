@@ -4,6 +4,8 @@ const { userModel, roleModel } = require("../user");
 const getFormattedQuery = require("../../utils/apiFeatures");
 const { warehouseModel } = require("../warehouse");
 const { Op } = require("sequelize");
+const { orderModel } = require("../order/order.model");
+const { db } = require("../../config/database");
 
 const includeRole = (role) => {
   const roleObj = {
@@ -104,7 +106,7 @@ exports.userController = {
       include: includeOptions(role),
       paranoid: false,
     };
-    
+
     const usersCount = await userModel.count({ ...countQry });
     const users = await userModel.findAll({
       ...countQry,
@@ -170,5 +172,32 @@ exports.userController = {
     console.log("delete user id", { id })
     await userModel.destroy({ where: { id } });
     res.status(200).json({ message: "User Deleted Successfully." });
+  }),
+
+  summary: catchAsyncError(async (req, res, next) => {
+    const { counts } = await orderModel.getCounts({});
+    const warehouse = await warehouseModel.count();
+    const userCount = await userModel.findAll({
+      paranoid: false,
+      include: [{
+        model: roleModel,
+        as: "userRole",
+        attributes: ["role"]
+      }],
+      attributes: [[db.fn('COUNT', db.col('userRole.role')), 'count']],
+      group: ['userRole.role'],
+    });
+
+    const userCnt = {};
+    userCount.forEach((c) => {
+      const { count, userRole } = c.dataValues;
+      userCnt[userRole.role] = count;
+    });
+
+    res.status(200).json({
+      ...counts,
+      warehouse,
+      ...userCnt,
+    })
   })
 }

@@ -2,7 +2,7 @@ const express = require('express');
 const { auth, authRole } = require("../../middlewares/auth");
 const { warehouse, order } = require("../../middlewares/validate");
 
-const { createController, getAllUsers, getUser, updateUser, deleteUser, unDeleteUser } = require('./admin.controller').userController;
+const { createController, getAllUsers, getUser, updateUser, deleteUser, unDeleteUser, summary } = require('./admin.controller').userController;
 
 const { createUpdateContent, getContent } = require("../staticDetails");
 
@@ -15,6 +15,8 @@ const { createTransaction, getAllTransaction, getTransaction, updateTransaction,
 // --------------------------------------------------------------------------------------------------------------
 const adminRoute = express.Router();
 const authAdmin = authRole(["admin"]);
+
+adminRoute.get("/summary", auth, authAdmin, summary);
 
 adminRoute.post("/controller", auth, authAdmin, createController);
 adminRoute.post("/manager", auth, authAdmin, createController);
